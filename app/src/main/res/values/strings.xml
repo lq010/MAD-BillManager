@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">MADassignment</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="add_group">Add a group</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="group_name">Group Name</string>
+
+    <string name="currency">currency</string>
+    <string name="add_expense">add expense</string>
+
+
+    //expense type
+    <string name="shopping">shopping</string>
+    <string name="food">food</string>
+    <string name="bill">bill</string>
+    <string name="other">other</string>
+    <string name="trip">trip</string>
+    <string name="home">home</string>
+</resources>

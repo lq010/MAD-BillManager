@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/iv_item_item_left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:src="@drawable/j01" />
+
+    <ImageView
+        android:id="@+id/iv_expense_type_img"
+        android:layout_width="41dp"
+        android:layout_height="41dp"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@+id/iv_item_item_left"
+        android:padding="5dp"
+        android:src="@mipmap/ic_home" />
+
+    <TextView
+        android:id="@+id/tv_item_item_type"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@+id/iv_expense_type_img"
+        android:text="home"
+        android:textSize="17sp" />
+
+    <TextView
+        android:id="@+id/tv_item_item_cost"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="10dp"
+        android:text="$123.80"
+        android:paddingRight="10dp"
+        android:textSize="17sp" />
+</RelativeLayout>
