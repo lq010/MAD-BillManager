@@ -9,7 +9,7 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
-    <string name="add_group">Add a group</string>
+    <string name="add_group">New group</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="group_name">Group Name</string>
@@ -25,4 +25,6 @@
     <string name="other">other</string>
     <string name="trip">trip</string>
     <string name="home">home</string>
+    <string name="edit_group">Edit</string>
+    <string name="add_a_group">Create group</string>
 </resources>

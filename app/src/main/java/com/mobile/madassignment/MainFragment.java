@@ -2,6 +2,7 @@ package com.mobile.madassignment;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -17,13 +18,29 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
+import com.firebase.ui.database.FirebaseListAdapter;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.mobile.madassignment.Adapter.ExpenseViewHolder;
+import com.mobile.madassignment.Adapter.GroupMemberViewAdapter;
+import com.mobile.madassignment.Adapter.GroupMemberViewHolder;
 import com.mobile.madassignment.models.Expense;
+import com.mobile.madassignment.models.GroupMember;
+import com.mobile.madassignment.util.DataFormat;
+
+import java.sql.Date;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -36,20 +53,7 @@ import com.mobile.madassignment.models.Expense;
  */
 public class MainFragment extends Fragment {
 
-    public static class ExpenseViewHolder extends RecyclerView.ViewHolder {
-        public TextView type;
-        public ImageView typeImgView;
-        public TextView cost;
-       //public CircleImageView messengerImageView;
 
-        public ExpenseViewHolder(View v) {
-            super(v);
-            type = (TextView) itemView.findViewById(R.id.tv_item_item_type);
-            typeImgView = (ImageView) itemView.findViewById(R.id.iv_expense_type_img);
-            cost = (TextView) itemView.findViewById(R.id.tv_item_item_cost);
-
-        }
-    }
 
     private LinearLayoutManager mLinearLayoutManager;
     private RecyclerView myExpenseRecyclerView;
@@ -57,7 +61,19 @@ public class MainFragment extends Fragment {
     private FloatingActionButton add_expense;
     private String group_key;
     private DatabaseReference mDatabaseRef;
+    private DatabaseReference groupRef;
     private FirebaseRecyclerAdapter<Expense, ExpenseViewHolder> mFirebaseAdapter;
+    private RelativeLayout rv_balance;
+    private TextView tv_balence_value;
+    private TextView tv_owenORowendText;
+    private TextView tv_mySpending;
+    private TextView tv_totalSpending;
+    private RecyclerView rv_members;
+
+    private List<Long> expenseKeys;
+    private int numOfmembers=1;
+    private float totalSpending;
+    private GroupMember me;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -108,7 +124,7 @@ public class MainFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(final LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v =  inflater.inflate(R.layout.fragment_main, container, false);
@@ -116,10 +132,21 @@ public class MainFragment extends Fragment {
         add_expense = (FloatingActionButton) v.findViewById(R.id.bt_add_expense);
         myExpenseRecyclerView = (RecyclerView) v.findViewById(R.id.expenseRecyclerView);
         mLinearLayoutManager = new LinearLayoutManager(this.getActivity());
+        rv_members = (RecyclerView)v.findViewById(R.id.rv_members);
+        rv_balance = (RelativeLayout)v.findViewById(R.id.rv_balance);
+
+        tv_balence_value = (TextView)v.findViewById(R.id.tv_my_balance);
+        tv_owenORowendText= (TextView)v.findViewById(R.id.tv_own_or_owned);
+        tv_mySpending= (TextView)v.findViewById(R.id.tv_my_spending);
+        tv_totalSpending= (TextView)v.findViewById(R.id.tv_group_spending);
+        expenseKeys = new ArrayList<>();
+        me = new GroupMember();
+
         mLinearLayoutManager.setStackFromEnd(false);
         myExpenseRecyclerView.setLayoutManager(mLinearLayoutManager);
 
         mDatabaseRef  = FirebaseDatabase.getInstance().getReference();
+
 
         mFirebaseAdapter = new FirebaseRecyclerAdapter<Expense, ExpenseViewHolder>(
                 Expense.class,
@@ -130,9 +157,22 @@ public class MainFragment extends Fragment {
             protected void populateViewHolder(ExpenseViewHolder viewHolder, Expense expense, int position) {
                 Log.v("expense.type",expense.getType());
                 Log.v("expense.cost",expense.getCost()+"");
+
                 String type = expense.getType();
-                viewHolder.type.setText(type);
-                viewHolder.cost.setText("- " +expense.getCost());
+                if(expense.getDescription().matches("")||expense.getDescription()==null){
+                    viewHolder.type.setText(type);
+
+                }else {
+                    viewHolder.type.setText(expense.getDescription());
+                }
+                viewHolder.cost.setText(expense.getCost() +" €");
+                if(expense.getPayer().matches("userid1")){  //TODO
+                    viewHolder.payer.setText("you payed ");
+                    viewHolder.payer.setTextColor(Color.GREEN);
+                }else {
+                    viewHolder.payer.setText( expense.getPayer()+ " payed ");
+                    viewHolder.payer.setTextColor(Color.RED);
+                }
                 switch (type){
                     case "home":
                         viewHolder.typeImgView.setImageResource(R.mipmap.ic_home);
@@ -151,16 +191,125 @@ public class MainFragment extends Fragment {
                         break;
                 }
 
-                if(expense.getDescription()!=null){
-                    //// TODO: 07/04/2017  
+                //TODO get userid (userid1 is a default id)
+                if(!expenseKeys.contains(expense.getCreateTime())){
+                    if (expense.getPayer().matches("userid1")) {
+                        float temp = me.getPayed() + expense.getCost();
+                        me.setPayed(temp);
+                    }
+                    totalSpending += expense.getCost();
+                    Log.v("payerId", expense.getPayer());
+                    Log.v("me_payed", me.getPayed() + "");
+                    Log.v("me_spending", me.getSpending() + "");
+                    Log.v("totalSpending ", totalSpending + "");
+
+                    float mySpending = totalSpending / numOfmembers;
+                    Log.v("numOfmembers ", numOfmembers + "");
+                    Log.v("mySpending ", mySpending + "");
+                    float mybalance = me.getPayed() - mySpending;
+                    tv_balence_value.setText(DataFormat.myDFloatFormat(mybalance));
+                    if (mybalance < 0) {
+                        tv_owenORowendText.setText("you owen");
+                        tv_owenORowendText.setBackgroundColor(Color.RED);
+                    }
+
+                    tv_mySpending.setText(DataFormat.myDFloatFormat(mySpending));
+                    tv_totalSpending.setText(DataFormat.myDFloatFormat(totalSpending));
+                    expenseKeys.add(expense.getCreateTime());
                 }
+
             }
         };
+
+//        mDatabaseRef.child("expenses").child(group_key).addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                float mySpending = totalSpending/numOfmembers;
+//                Log.v("numOfmembers ", numOfmembers+"");
+//                Log.v("mySpending ", mySpending+"");
+//                float mybalance = me.getPayed()-mySpending;
+//                tv_balence_value.setText(DataFormat.myDFloatFormat(mybalance));
+//                if(mybalance<0){
+//                    tv_owenORowendText.setText("you owen");
+//                    tv_owenORowendText.setBackgroundColor(Color.RED);
+//                }
+//
+//                tv_mySpending.setText(DataFormat.myDFloatFormat(mySpending));
+//                tv_totalSpending.setText(DataFormat.myDFloatFormat(totalSpending));
+//
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//                Toast.makeText(getActivity(),"Firebase error, please connect the internet, or try again latter",Toast.LENGTH_SHORT);
+//            }
+//        });
+
         myExpenseRecyclerView.setLayoutManager(mLinearLayoutManager);
         myExpenseRecyclerView.setAdapter(mFirebaseAdapter);
 
+        DatabaseReference groupMembersRef = mDatabaseRef.child("groups").child(group_key).child("members");
 
+        DatabaseReference userRef = mDatabaseRef.child("users");
+        //get group members
+        List<String> names = new ArrayList<>();
+        final GroupMemberViewAdapter groupAdapter = new GroupMemberViewAdapter(names , this.getContext());
 
+        groupMembersRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                numOfmembers = (int)dataSnapshot.getChildrenCount();
+                for(DataSnapshot data: dataSnapshot.getChildren()){
+                    String userId = data.getKey();
+                    String userName = data.getValue().toString();
+                    Log.v("test key",userId);
+                    groupAdapter.getNames().add(userName);
+                }
+                groupAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+//        groupMembersRef.addChildEventListener(new ChildEventListener() {
+//            @Override
+//            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+//
+//                String userId = dataSnapshot.getKey();
+//                Log.v("test key",userId);
+//                groupAdapter.getNames().add(dataSnapshot.getValue().toString());
+//                groupAdapter.notifyDataSetChanged();
+//            }
+//
+//            @Override
+//            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+//                // TODO
+//            }
+//
+//            @Override
+//            public void onChildRemoved(DataSnapshot dataSnapshot) {
+//
+//            }
+//
+//            @Override
+//            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+//
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//
+//            }
+//        });
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this.getActivity(),LinearLayoutManager.HORIZONTAL,false);
+        
+        groupAdapter.getNames().add("add_new_member");
+
+        rv_members.setLayoutManager(layoutManager);
+        rv_members.setAdapter(groupAdapter);
+////////////
         add_expense.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -174,7 +323,21 @@ public class MainFragment extends Fragment {
                 startActivity(intent);
             }
         });
+
+        rv_balance.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getActivity(),BalanceActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putString("group_key",group_key);
+                intent.putExtras(bundle);
+                startActivity(intent);
+            }
+        });
+
         return v;
+
+
 
     }
 
@@ -192,16 +355,7 @@ public class MainFragment extends Fragment {
         mListener = null;
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
+
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);

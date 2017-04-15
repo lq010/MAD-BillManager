@@ -1,23 +1,30 @@
 package com.mobile.madassignment.models;
 
+import java.util.Date;
+
 /**
  * Created by lq on 05/04/2017.
  */
 
 public class Expense {
 
-    private double cost;
+    private float cost;
     private String type;
     private String description;
+    private String payer;
+
+    //private Timestamp timestamp;
+    private long createTime;
 
     public Expense() {
+        this.createTime = new Date().getTime();
     }
 
-    public double getCost() {
+    public float getCost() {
         return cost;
     }
 
-    public void setCost(double cost) {
+    public void setCost(float cost) {
         this.cost = cost;
     }
 
@@ -35,5 +42,17 @@ public class Expense {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getPayer() {
+        return payer;
+    }
+
+    public void setPayer(String payer) {
+        this.payer = payer;
+    }
+
+    public long getCreateTime() {
+        return createTime;
     }
 }

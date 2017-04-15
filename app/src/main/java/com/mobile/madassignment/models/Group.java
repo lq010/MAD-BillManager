@@ -1,8 +1,6 @@
 package com.mobile.madassignment.models;
 
-import android.util.ArraySet;
-
-import java.sql.Timestamp;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -11,54 +9,43 @@ import java.util.Map;
 
 public class Group {
     private String name ;
-    private Map<String, String> timestamp;
-    private String type;
+    //private Timestamp timestamp;//firebase timestamp is a Map<String,String>
+    private long createTime;
+
     private String currency;
-    private ArraySet<String> members;
+    private Map<String,String> members;//<id,name>
     //private int  tempMenuId;
 
 
     public Group() {
+        Date date = new Date();
+        this.createTime = date.getTime();
     }
 
-    public Group(String name, Map<String, String> timestamp, String currency, String type) {
+    public Group(String name, String currency, Map<String, String> members) {
         this.name = name;
-        this.timestamp = timestamp;
         this.currency = currency;
-        this.type = type;
+        this.members = members;
+        Date date = new Date();
+        this.createTime = date.getTime();
     }
+
+
 
     public String getName() {
         return name;
-    }
-
-    public Map<String, String> getTimestamp() {
-        return timestamp;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public ArraySet<String> getMembers() {
-        return members;
     }
 
     public void setName(String name) {
         this.name = name;
     }
 
-    public void setTimestamp(Map<String, String> timestamp) {
-        this.timestamp = timestamp;
+    public long getCreateTime() {
+        return createTime;
     }
 
-    public void setType(String type) {
-        this.type = type;
-    }
 
-    public void setMembers(ArraySet<String> members) {
-        this.members = members;
-    }
+
 
     public String getCurrency() {
         return currency;
@@ -68,12 +55,11 @@ public class Group {
         this.currency = currency;
     }
 
-//    public int getTempMenuId() {
-//        return tempMenuId;
-//    }
-//
-//    public void setTempMenuId(int tempMenuId) {
-//        this.tempMenuId = tempMenuId;
-//    }
+    public Map<String, String> getMembers() {
+        return members;
+    }
 
+    public void setMembers(Map<String, String> members) {
+        this.members = members;
+    }
 }

@@ -20,6 +20,7 @@ import com.mobile.madassignment.models.ExpenseType;
 import com.mobile.madassignment.view.NoScrollGridView;
 
 
+import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -187,7 +188,7 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnC
                     Toast.makeText(AddNewExpenseActivity.this, "please chose a type！", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                if(Double.parseDouble(result)==0){
+                if(Float.parseFloat(result)==0){
                     Toast.makeText(AddNewExpenseActivity.this, "please enter cost！", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -199,15 +200,20 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnC
                 String expense_key = mDatebaseRef.push().getKey();
                 Expense newExpense = new Expense();
                 NumberFormat formatter = new DecimalFormat("#.##");
-                double cost = Double.parseDouble(result);
+                float cost = Float.parseFloat(result);
 
                 newExpense.setCost(cost);
 
                 newExpense.setType(selectedType.getName());
+                //
+                newExpense.setPayer("userid1");//TODO get user id
 
+                //
                 String descriotion = description.getText().toString();
-                if(descriotion!=""){
+                if(!descriotion.matches("")){
                     newExpense.setDescription(description.getText().toString());
+                }else{
+                    newExpense.setDescription("");
                 }
 
                 mDatebaseRef.child("expenses").child(group_key).child(expense_key).setValue(newExpense);

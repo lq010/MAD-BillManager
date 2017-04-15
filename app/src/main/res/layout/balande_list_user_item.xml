@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:padding="3dp">
 
     <ImageView
         android:id="@+id/iv_item_item_left"
@@ -10,36 +11,28 @@
         android:layout_centerVertical="true"
         android:src="@drawable/j01" />
 
-    <ImageView
-        android:id="@+id/iv_expense_type_img"
+    <com.mikepenz.materialdrawer.view.BezelImageView
+        android:id="@+id/iv_balance_userPhoto"
         android:layout_width="41dp"
         android:layout_height="41dp"
         android:layout_centerVertical="true"
+        android:layout_marginLeft="10dp"
         android:layout_toRightOf="@+id/iv_item_item_left"
         android:padding="5dp"
-        android:src="@mipmap/ic_home" />
+        android:elevation="1dp" />
 
     <TextView
-        android:id="@+id/tv_item_item_type"
+        android:id="@+id/tv_balance_user_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
-        android:layout_toRightOf="@+id/iv_expense_type_img"
+        android:layout_toRightOf="@+id/iv_balance_userPhoto"
+        android:layout_marginLeft="10dp"
         android:text="home"
         android:textSize="17sp" />
 
     <TextView
-        android:id="@+id/tv_payer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_marginRight="10dp"
-        android:text="you payed"
-        android:layout_toLeftOf="@+id/tv_item_item_cost"
-        android:textSize="17sp"
-        />
-    <TextView
-        android:id="@+id/tv_item_item_cost"
+        android:id="@+id/tv_balance_cost"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"

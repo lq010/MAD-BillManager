@@ -15,12 +15,18 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
 import com.mobile.madassignment.models.Group;
+import com.mobile.madassignment.models.GroupMember;
 
+import java.util.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Currency;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -38,6 +44,7 @@ public class AddGroupActivity extends AppCompatActivity implements AdapterView.O
 
     private Currency group_currency;
 
+
     private int eur_position;
 
 
@@ -51,6 +58,7 @@ public class AddGroupActivity extends AppCompatActivity implements AdapterView.O
         back = (ImageView)findViewById(R.id.iv_new_group_back);
         et_groupName = (EditText)findViewById(R.id.et_group_name);
         s_currency = (Spinner) findViewById(R.id.currency_spinner);
+
 
         Set<Currency> myset = getAvailableCurrencies();
         List<Currency> myarray = new ArrayList<>(myset);
@@ -89,11 +97,16 @@ public class AddGroupActivity extends AppCompatActivity implements AdapterView.O
                    Toast.makeText(getApplicationContext(),"please enter a group name",Toast.LENGTH_SHORT).show();
                     return;
                 }
-
+                Calendar calendar = new GregorianCalendar();
+                Timestamp timestamp = new Timestamp(System.currentTimeMillis());
                 Toast.makeText(getApplicationContext(),name,Toast.LENGTH_SHORT).show();
                 Group newGroup = new Group(name,
-                        ServerValue.TIMESTAMP,
                         s_currency.getSelectedItem().toString(),null);
+                ///TODO get the usrid
+                Map<String,String> group_member = new HashMap<String, String>();
+                group_member.put("userid1","User1");
+                newGroup.setMembers(group_member);
+                ////
                 String groudId =  mFirebaseDatabaseReference.push().getKey();
                 mFirebaseDatabaseReference.child("groups").child(groudId).setValue(newGroup);
 

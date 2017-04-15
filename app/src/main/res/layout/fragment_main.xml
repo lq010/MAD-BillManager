@@ -3,24 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.mobile.madassignment.MainFragment">
+    tools:context="com.mobile.madassignment.MainFragment"
+    >
 
-
-
-
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/expenseRecyclerView"
-        android:layout_width="362dp"
-        android:layout_height="456dp"
-        android:layout_above="@+id/linearLayout"
-        android:layout_marginRight="8dp"
-        app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginLeft="8dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="8dp"
-        tools:layout_editor_absoluteY="103dp"
-        tools:layout_editor_absoluteX="12dp" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/bt_add_expense"
@@ -45,22 +30,199 @@
 
         android:background="#6a000000" />
 
-    <EditText
-        android:id="@+id/editText"
-        android:layout_width="320dp"
-        android:layout_height="75dp"
-        android:ems="10"
-        android:inputType="textPersonName"
-        android:text="group_info"
-        android:layout_marginLeft="8dp"
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/rv_members"
+        android:layout_width="0dp"
+        android:layout_height="70dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:background="@color/white"
+        android:orientation="vertical"
         app:layout_constraintLeft_toLeftOf="parent"
-        android:layout_marginRight="8dp"
         app:layout_constraintRight_toRightOf="parent"
+
         app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="3dp"
+        app:layout_constraintVertical_chainStyle="packed"
+        android:layout_marginStart="5dp"
+        android:layout_marginEnd="5dp">
+
+    </android.support.v7.widget.RecyclerView>
+
+    <android.support.constraint.ConstraintLayout
+
+        android:id="@+id/constraintLayout"
+        android:layout_width="0dp"
+        android:layout_height="108dp"
+        android:orientation="vertical"
+        android:background="@color/white"
+
+
+        app:layout_constraintTop_toBottomOf="@+id/rv_members"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:layout_marginBottom="6dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        android:layout_marginStart="5dp"
+        android:layout_marginEnd="5dp">
+
+   <TextView
+       android:id="@+id/tv_my_balance"
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:lines="1"
+       android:layout_marginLeft="32dp"
+       android:textColor="@color/black"
+       android:text="888"
+       android:textStyle="bold"
+       android:textSize="20sp"
+       android:gravity="center"
+       app:layout_constraintLeft_toLeftOf="parent"
+       app:layout_constraintBottom_toBottomOf="parent"
+       android:layout_marginBottom="8dp"
+       app:layout_constraintTop_toTopOf="parent"
+       android:layout_marginTop="8dp"
+       app:layout_constraintVertical_bias="0.177"
+       android:layout_marginStart="32dp" />
+
+        <TextView
+            android:id="@+id/tv_currency_symbol"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintLeft_toRightOf="@+id/tv_my_balance"
+            android:layout_marginLeft="9dp"
+            android:text="euro"
+
+            app:layout_constraintTop_toTopOf="@+id/tv_my_balance"
+            android:layout_marginTop="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginBottom="8dp"
+            app:layout_constraintVertical_bias="0.0"
+            android:layout_marginStart="9dp" />
+
+        <TextView
+            android:layout_width="82dp"
+            android:layout_height="25dp"
+            android:text="you owned"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:background="@color/md_green_300"
+            app:layout_constraintTop_toBottomOf="@+id/tv_my_balance"
+
+            app:layout_constraintLeft_toLeftOf="@+id/tv_my_balance"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginBottom="8dp"
+            android:layout_marginRight="8dp"
+            app:layout_constraintRight_toRightOf="@+id/tv_currency_symbol"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintVertical_bias="0.0"
+            android:id="@+id/tv_own_or_owned"
+            android:layout_marginEnd="8dp" />
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="my spending"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:id="@+id/textView5"
+            android:layout_marginEnd="8dp"
+            app:layout_constraintRight_toLeftOf="@+id/tv_group_spending"
+            android:layout_marginRight="8dp"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginTop="16dp" />
+
+        <TextView
+            android:id="@+id/tv_my_spending"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1000"
+            android:textColor="@color/md_deep_orange_500"
+            android:gravity="center"
+            android:textSize="17sp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginTop="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="group spending"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:id="@+id/textView7"
+            app:layout_constraintRight_toLeftOf="@+id/tv_group_spending"
+            android:layout_marginRight="8dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@+id/textView5"
+            android:layout_marginEnd="8dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1000"
+            android:textSize="17sp"
+            android:gravity="center"
+            android:id="@+id/tv_group_spending"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@+id/tv_my_spending" />
+    </android.support.constraint.ConstraintLayout>
+
+    <RelativeLayout
+        android:id="@+id/rv_balance"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:background="@color/white"
+        app:layout_constraintTop_toBottomOf="@+id/constraintLayout"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/expenseRecyclerView"
-        tools:layout_editor_absoluteY="-1dp"
-        tools:layout_editor_absoluteX="-20dp" />
+        android:layout_marginBottom="5dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="Balance"
+            android:layout_marginLeft="5dp"
+            android:textSize="18sp"/>
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="5dp"
+            android:src="@drawable/right"/>
+    </RelativeLayout>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/expenseRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/linearLayout"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:background="@color/white"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rv_balance"
+        android:layout_marginTop="235dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginEnd="5dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginBottom="8dp" />
+
 
 </android.support.constraint.ConstraintLayout>
