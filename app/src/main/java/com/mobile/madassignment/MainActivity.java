@@ -1,7 +1,10 @@
 package com.mobile.madassignment;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -32,6 +35,7 @@ import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 import com.mikepenz.materialdrawer.model.interfaces.Nameable;
 import com.mobile.madassignment.R;
 
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -167,6 +171,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        if(!isInternetAvailable(this.getBaseContext())){
+            Toast.makeText(this, "Please connect to the Internet",Toast.LENGTH_SHORT ).show();
+        }else{
+            Toast.makeText(this, "connected to Network",Toast.LENGTH_SHORT ).show();
+        }
         //get data from firebase
         DatabaseReference groupRef = mRootRef.child("groups");
 
@@ -264,5 +273,16 @@ public class MainActivity extends AppCompatActivity {
         } else {
             super.onBackPressed();
         }
+    }
+//check Internet connection
+    public boolean isInternetAvailable(Context context) {
+        ConnectivityManager cm =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+        return  isConnected;
+
     }
 }
