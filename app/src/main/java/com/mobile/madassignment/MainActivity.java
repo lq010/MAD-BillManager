@@ -183,14 +183,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 ++id_counter;
-
+                int num_members = (int)dataSnapshot.child("members").getChildrenCount();
+                Log.v("num_members" ,num_members+" ");
                 result.addItem(
-                        new PrimaryDrawerItem().withName(dataSnapshot.child("name").getValue().toString())
-                        .withDescription("mun_members")
-                        .withIcon(R.drawable.profile)
-                        .withIdentifier(id_counter)
-                        .withSelectable(true)
-                        .withBadgeStyle(new BadgeStyle()
+                        new PrimaryDrawerItem()
+                                .withName(dataSnapshot.child("name").getValue().toString())
+                                .withDescription(num_members + " members")
+                                .withDescriptionTextColor(Color.parseColor("#b4b6ba"))
+                                .withIcon(R.drawable.profile)
+                                .withIdentifier(id_counter)
+                                .withSelectable(true)
+                                .withBadgeStyle(new BadgeStyle()
                                 .withTextColor(Color.WHITE)
                                 .withColorRes(R.color.md_red_700))
                 );

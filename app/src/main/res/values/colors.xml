@@ -9,6 +9,7 @@
     <color name="light_gray">#fafafa</color>
     <color name="black_overlay">#66000000</color>
 
+    <color name="grey">#b4b6ba</color>
     <color name="red">#EC473F</color>
     <color name="green">#25fa55</color>
     <color name="press">#25fa55</color>
