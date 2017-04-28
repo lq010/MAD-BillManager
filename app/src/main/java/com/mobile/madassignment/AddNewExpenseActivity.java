@@ -11,6 +11,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.mobile.madassignment.Adapter.ExpenseTypeAdapter;
@@ -55,7 +57,8 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnC
     private ImageView ivInputAdd;
 
     private String group_key;
-
+    private FirebaseUser user;
+    private FirebaseAuth mAuth;
 
     private String result = "0";
 
@@ -95,6 +98,8 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnC
         group_key = getIntent().getExtras().getString("group_key");
         initViewPagerData();
         initViewListener();
+        mAuth = FirebaseAuth.getInstance();
+        user = mAuth.getCurrentUser();
     }
 
     @Override
@@ -184,6 +189,10 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnC
                 }
                 break;
             case R.id.iv_input_ok:
+                if(user==null){
+                    Toast.makeText(AddNewExpenseActivity.this, "please login！", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 if(selectedType==null){
                     Toast.makeText(AddNewExpenseActivity.this, "please chose a type！", Toast.LENGTH_SHORT).show();
                     return;
@@ -206,7 +215,7 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnC
 
                 newExpense.setType(selectedType.getName());
                 //
-                newExpense.setPayer("userid1");//TODO get user id
+                newExpense.setPayer(user.getUid());
 
                 //
                 String descriotion = description.getText().toString();

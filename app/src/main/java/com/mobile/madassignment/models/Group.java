@@ -13,6 +13,7 @@ public class Group {
     private long createTime;
 
     private String currency;
+
     private Map<String,String> members;//<id,name>
     //private int  tempMenuId;
 

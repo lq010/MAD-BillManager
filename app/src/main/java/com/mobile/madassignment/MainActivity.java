@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -15,11 +16,16 @@ import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.github.mikephil.charting.renderer.DataRenderer;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.mikepenz.itemanimators.AlphaCrossFadeAnimator;
 import com.mikepenz.materialdrawer.AccountHeader;
 import com.mikepenz.materialdrawer.AccountHeaderBuilder;
@@ -34,6 +40,7 @@ import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 import com.mikepenz.materialdrawer.model.interfaces.Nameable;
 import com.mobile.madassignment.R;
+import com.mobile.madassignment.models.Group;
 
 import java.net.InetAddress;
 import java.util.HashMap;
@@ -50,24 +57,47 @@ public class MainActivity extends AppCompatActivity {
 
     private Map<Long, String> menuId_group;
     long id_counter = 0;
+
+    //Authentication
+    private FirebaseAuth mAuth;
+    private FirebaseAuth.AuthStateListener mAuthListener;
+    private boolean AuthState = false;
+    private String userName = "login/register";
+    private String userAddress = "XXX@XXXXX.XX";
+    //private Uri photoUrl;
+    //private String UID = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mAuth = FirebaseAuth.getInstance();
+
+        mAuthListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                if (user != null) {
+                    // User is signed in
+
+                    Log.v( "starting fragment", "onAuthStateChanged:signed_in:" + user.getUid());
+                    initGroupList(user.getUid());
+                } else {
+                    LoginFragment loginFragment = new LoginFragment();
+                    FragmentManager manager = getSupportFragmentManager();
+                    manager.beginTransaction().replace(R.id.main_content,loginFragment).commit();
+                }
+                // ...
+            }
+        };
+
+
+
         menuId_group = new HashMap<>();
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-
-
-//        add_group_bt.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Intent intent = new Intent(MainActivity.this,AddGroupActivity.class);
-//
-//                startActivity(intent);
-//            }
-//        });
 
         final IProfile profile = new ProfileDrawerItem().withName("Batman").withEmail("batman@gmail.com")
                 .withIcon(R.drawable.profile).withIdentifier(105);
@@ -107,7 +137,6 @@ public class MainActivity extends AppCompatActivity {
 
         //drawer items
         result = new DrawerBuilder()
-
                 .withPositionBasedStateManagement(true)
                 .withActivity(this)
                 .withStickyFooter(R.layout.drawer_footer)
@@ -137,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
                             long id = drawerItem.getIdentifier();
                             String group_key= menuId_group.get(id);
                             Log.v("starting fragment", "item id:"+id +" group_key:"+ group_key);
-                          // Toast.makeText(MainActivity.this, id + group_key, Toast.LENGTH_SHORT).show();
+                            // Toast.makeText(MainActivity.this, id + group_key, Toast.LENGTH_SHORT).show();
                             Bundle bundle = new Bundle();
                             bundle.putString("group_key", group_key);
 
@@ -147,20 +176,15 @@ public class MainActivity extends AppCompatActivity {
                             mainFragment.setArguments(bundle);
                             manager.beginTransaction().replace(R.id.main_content,mainFragment).commit();
                         }
-                    return false;
+                        return false;
 
                     }
                 })
 
                 .withSavedInstance(savedInstanceState)
-                .withShowDrawerOnFirstLaunch(true)
-//                .withShowDrawerUntilDraggedOpened(true)
                 .build();
 
 
-        if(!result.isDrawerOpen()){
-            result.openDrawer();
-        }
         result.getStickyFooter().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -173,11 +197,141 @@ public class MainActivity extends AppCompatActivity {
 
         if(!isInternetAvailable(this.getBaseContext())){
             Toast.makeText(this, "Please connect to the Internet",Toast.LENGTH_SHORT ).show();
-        }else{
-            Toast.makeText(this, "connected to Network",Toast.LENGTH_SHORT ).show();
         }
+
+
+
+
+    }
+
+    private OnCheckedChangeListener onCheckedChangeListener = new OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(IDrawerItem drawerItem, CompoundButton buttonView, boolean isChecked) {
+            if (drawerItem instanceof Nameable) {
+                Log.i("material-drawer", "DrawerItem: " + ((Nameable) drawerItem).getName() + " - toggleChecked: " + isChecked);
+            } else {
+                Log.i("material-drawer", "toggleChecked: " + isChecked);
+            }
+        }
+    };
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        mAuth.addAuthStateListener(mAuthListener);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (mAuthListener != null) {
+            mAuth.removeAuthStateListener(mAuthListener);
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        //add the values which need to be saved from the drawer to the bundle
+        outState = result.saveInstanceState(outState);
+        //add the values which need to be saved from the accountHeader to the bundle
+        outState = headerResult.saveInstanceState(outState);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onBackPressed() {
+        //handle the back press :D close the drawer first and if the drawer is closed close the activity
+        if (result != null && result.isDrawerOpen()) {
+            result.closeDrawer();
+        } else {
+            super.onBackPressed();
+        }
+    }
+//check Internet connection
+    public boolean isInternetAvailable(Context context) {
+        ConnectivityManager cm =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+        return  isConnected;
+
+    }
+
+//get groups
+    private void initGroupList(String userId){
+        final DatabaseReference groups = mRootRef.child("groups");
+        DatabaseReference user_groups = mRootRef.child("users").child(userId).child("groups");
+
+
+
+        user_groups.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                ++id_counter;
+                final String groupKey = dataSnapshot.getKey();
+                 DatabaseReference group = groups.child(groupKey);
+                    group.addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            String groupName =  dataSnapshot.child("name").toString();
+                            int num_members = (int)dataSnapshot.child("members").getChildrenCount();
+
+                            if(!menuId_group.containsValue(groupKey)){
+                                result.addItem(
+                                        new PrimaryDrawerItem()
+                                                .withName(groupName)
+                                                .withDescription(num_members + " members")
+                                                .withDescriptionTextColor(Color.parseColor("#b4b6ba"))
+                                                .withIcon(R.drawable.profile)
+                                                .withIdentifier(id_counter)
+                                                .withSelectable(true)
+                                                .withBadgeStyle(new BadgeStyle()
+                                                        .withTextColor(Color.WHITE)
+                                                        .withColorRes(R.color.md_red_700))
+                                );
+                            }else {
+                                //TODO update DrawerItem
+                            }
+
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            //
+                        }
+                    });
+                menuId_group.put(id_counter,groupKey);
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+
+
+ /***old
         //get data from firebase
         DatabaseReference groupRef = mRootRef.child("groups");
+
 
         groupRef.addChildEventListener(new ChildEventListener() {
             @Override
@@ -194,8 +348,8 @@ public class MainActivity extends AppCompatActivity {
                                 .withIdentifier(id_counter)
                                 .withSelectable(true)
                                 .withBadgeStyle(new BadgeStyle()
-                                .withTextColor(Color.WHITE)
-                                .withColorRes(R.color.md_red_700))
+                                        .withTextColor(Color.WHITE)
+                                        .withColorRes(R.color.md_red_700))
                 );
                 Log.v("fire_data", dataSnapshot.getKey());
 
@@ -246,46 +400,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+  **/
     }
 
-    private OnCheckedChangeListener onCheckedChangeListener = new OnCheckedChangeListener() {
-        @Override
-        public void onCheckedChanged(IDrawerItem drawerItem, CompoundButton buttonView, boolean isChecked) {
-            if (drawerItem instanceof Nameable) {
-                Log.i("material-drawer", "DrawerItem: " + ((Nameable) drawerItem).getName() + " - toggleChecked: " + isChecked);
-            } else {
-                Log.i("material-drawer", "toggleChecked: " + isChecked);
-            }
-        }
-    };
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        //add the values which need to be saved from the drawer to the bundle
-        outState = result.saveInstanceState(outState);
-        //add the values which need to be saved from the accountHeader to the bundle
-        outState = headerResult.saveInstanceState(outState);
-        super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    public void onBackPressed() {
-        //handle the back press :D close the drawer first and if the drawer is closed close the activity
-        if (result != null && result.isDrawerOpen()) {
-            result.closeDrawer();
-        } else {
-            super.onBackPressed();
-        }
-    }
-//check Internet connection
-    public boolean isInternetAvailable(Context context) {
-        ConnectivityManager cm =
-                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        boolean isConnected = activeNetwork != null &&
-                activeNetwork.isConnectedOrConnecting();
-        return  isConnected;
-
+    public FirebaseAuth getmAuth() {
+        return mAuth;
     }
 }

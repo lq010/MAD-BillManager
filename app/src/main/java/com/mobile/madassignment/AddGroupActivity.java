@@ -11,6 +11,8 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
@@ -42,6 +44,8 @@ public class AddGroupActivity extends AppCompatActivity implements AdapterView.O
     private Spinner s_currency;
     private DatabaseReference mFirebaseDatabaseReference;
 
+    private FirebaseAuth mAuth;
+    private FirebaseUser user;
     private Currency group_currency;
 
 
@@ -52,7 +56,10 @@ public class AddGroupActivity extends AppCompatActivity implements AdapterView.O
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_group);
+
         mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
+        mAuth = FirebaseAuth.getInstance();
+        user = mAuth.getCurrentUser();
 
         done = (Button)findViewById(R.id.bt_add_group);
         back = (ImageView)findViewById(R.id.iv_new_group_back);
@@ -92,26 +99,37 @@ public class AddGroupActivity extends AppCompatActivity implements AdapterView.O
         done.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String name = et_groupName.getText().toString();
-                if(name.trim().matches("")){
-                   Toast.makeText(getApplicationContext(),"please enter a group name",Toast.LENGTH_SHORT).show();
+                if(user!=null){
+                    String name = et_groupName.getText().toString();
+                    if(name.trim().matches("")){
+                        Toast.makeText(getApplicationContext(),"please enter a group name",Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    Calendar calendar = new GregorianCalendar();
+                    Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+                    Toast.makeText(getApplicationContext(),name,Toast.LENGTH_SHORT).show();
+                    Group newGroup = new Group(name,
+                            s_currency.getSelectedItem().toString(),null);
+                    ///TODO get the usrid
+                    Map<String,String> group_member = new HashMap<String, String>();
+
+                    group_member.put(user.getUid(),user.getDisplayName());
+                    newGroup.setMembers(group_member);
+
+                    String groudId =  mFirebaseDatabaseReference.push().getKey();
+                    //add group (under groups node)
+                    mFirebaseDatabaseReference.child("groups").child(groudId).setValue(newGroup);
+                    // under users/groups
+                    mFirebaseDatabaseReference.child("users").child("groups").child(groudId).setValue("true");
+                    AddGroupActivity.this.finish();
+
+                }else{
+                    Toast.makeText(getApplicationContext(),"please login",Toast.LENGTH_SHORT).show();
                     return;
                 }
-                Calendar calendar = new GregorianCalendar();
-                Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-                Toast.makeText(getApplicationContext(),name,Toast.LENGTH_SHORT).show();
-                Group newGroup = new Group(name,
-                        s_currency.getSelectedItem().toString(),null);
-                ///TODO get the usrid
-                Map<String,String> group_member = new HashMap<String, String>();
-                group_member.put("userid1","User1");
-                newGroup.setMembers(group_member);
-                ////
-                String groudId =  mFirebaseDatabaseReference.push().getKey();
-                mFirebaseDatabaseReference.child("groups").child(groudId).setValue(newGroup);
 
 
-                AddGroupActivity.this.finish();
+
 
             }
         });
