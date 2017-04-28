@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -15,6 +16,8 @@ import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -50,10 +53,41 @@ public class MainActivity extends AppCompatActivity {
 
     private Map<Long, String> menuId_group;
     long id_counter = 0;
+
+    //Authentication
+    private FirebaseAuth mAuth;
+    private FirebaseAuth.AuthStateListener mAuthListener;
+    private boolean AuthState = false;
+    private String userName = "login/register";
+    private String userAddress = "XXX@XXXXX.XX";
+    //private Uri photoUrl;
+    //private String UID = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mAuth = FirebaseAuth.getInstance();
+        mAuthListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                if (user != null) {
+                    // User is signed in
+                    Log.v( "starting fragment", "onAuthStateChanged:signed_in:" + user.getUid());
+                } else {
+                    // User is signed out
+                    Log.v("starting fragment","onAuthStateChanged:signed_out");
+                }
+                // ...
+            }
+        };
+
+        LoginFragment loginFragment = new LoginFragment();
+        FragmentManager manager = getSupportFragmentManager();
+        manager.beginTransaction().replace(R.id.main_content,loginFragment).commit();
+
         menuId_group = new HashMap<>();
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -158,9 +192,9 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
 
-        if(!result.isDrawerOpen()){
-            result.openDrawer();
-        }
+//        if(!result.isDrawerOpen()){
+//            result.openDrawer();
+ //       }
         result.getStickyFooter().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -260,6 +294,20 @@ public class MainActivity extends AppCompatActivity {
     };
 
     @Override
+    public void onStart() {
+        super.onStart();
+        mAuth.addAuthStateListener(mAuthListener);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (mAuthListener != null) {
+            mAuth.removeAuthStateListener(mAuthListener);
+        }
+    }
+
+    @Override
     protected void onSaveInstanceState(Bundle outState) {
         //add the values which need to be saved from the drawer to the bundle
         outState = result.saveInstanceState(outState);
@@ -287,5 +335,9 @@ public class MainActivity extends AppCompatActivity {
                 activeNetwork.isConnectedOrConnecting();
         return  isConnected;
 
+    }
+
+    public FirebaseAuth getmAuth() {
+        return mAuth;
     }
 }
