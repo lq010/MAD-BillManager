@@ -5,7 +5,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,40 +19,32 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-
-import java.util.concurrent.Executor;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link LoginFragment.OnFragmentInteractionListener} interface
+ * {@link RegisterFragment.OnFragmentInteractionListener} interface
  * to handle interaction events.
- * Use the {@link LoginFragment#newInstance} factory method to
+ * Use the {@link RegisterFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class LoginFragment extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    //private static final String ARG_PARAM1 = "param1";
-    //private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    //private String mParam1;
-    //private String mParam2;
+public class RegisterFragment extends Fragment {
 
     private static final String ARG_AUTH = "mAuth";
     private FirebaseAuth mAuth;
 
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
+    private EditText mRepeatView;
     private View mProgressView;
     private View mLoginFormView;
 
     private OnFragmentInteractionListener mListener;
 
-
-    public LoginFragment() {
+    public RegisterFragment() {
         // Required empty public constructor
     }
 
@@ -63,13 +54,11 @@ public class LoginFragment extends Fragment {
      *
      * @param param1 Parameter 1.
      * @param param2 Parameter 2.
-     * @return A new instance of fragment LoginFragment.
+     * @return A new instance of fragment RegisterFragment.
      */
-    public static LoginFragment newInstance(String param1, String param2) {
-        LoginFragment fragment = new LoginFragment();
+    public static RegisterFragment newInstance(String param1, String param2) {
+        RegisterFragment fragment = new RegisterFragment();
         Bundle args = new Bundle();
-        //args.putString(ARG_PARAM1, param1);
-        //args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
@@ -87,22 +76,16 @@ public class LoginFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View v =  inflater.inflate(R.layout.fragment_login, container, false);
+        View v =  inflater.inflate(R.layout.fragment_register, container, false);
         mAuth = ((MainActivity)getActivity()).getmAuth();
         mEmailView = (AutoCompleteTextView) v.findViewById(R.id.email);
         mPasswordView = (EditText) v.findViewById(R.id.password);
-        Button mEmailSignInButton = (Button) v.findViewById(R.id.email_sign_in_button);
-        mEmailSignInButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                attemptLogin();
-            }
-        });
+        mRepeatView = (EditText) v.findViewById(R.id.repeat);
         Button mEmailRegisterButton = (Button) v.findViewById(R.id.email_Register_button);
         mEmailRegisterButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                setRegisterFragment();
+                attemptRegister();
             }
         });
         mLoginFormView = v.findViewById(R.id.login_form);
@@ -110,12 +93,20 @@ public class LoginFragment extends Fragment {
         return v;
     }
 
-    private void attemptLogin() {
+    // TODO: Rename method, update argument and hook method into UI event
+    public void onButtonPressed(Uri uri) {
+        if (mListener != null) {
+            mListener.onFragmentInteraction(uri);
+        }
+    }
+
+    private void attemptRegister() {
         mEmailView.setError(null);
         mPasswordView.setError(null);
 
         String email = mEmailView.getText().toString();
         String password = mPasswordView.getText().toString();
+        String repeat = mRepeatView.getText().toString();
 
         boolean cancel = false;
         View focusView = null;
@@ -124,6 +115,12 @@ public class LoginFragment extends Fragment {
         if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
             mPasswordView.setError(getString(R.string.error_invalid_password));
             focusView = mPasswordView;
+            cancel = true;
+        }
+
+        if(!isPasswordRepeatedCorrectly(password, repeat)) {
+            mRepeatView.setError(getString(R.string.error_repeat));
+            focusView = mRepeatView;
             cancel = true;
         }
 
@@ -137,6 +134,7 @@ public class LoginFragment extends Fragment {
             focusView = mEmailView;
             cancel = true;
         }
+
         if (cancel) {
             // There was an error; don't attempt login and focus the first
             // form field with an error.
@@ -144,87 +142,31 @@ public class LoginFragment extends Fragment {
         } else {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
-            mAuth.signInWithEmailAndPassword(email, password)
+            mAuth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
-                            // If sign in fails
+                            //Log.d("Login", "createUserWithEmail:onComplete:" + task.isSuccessful());
+
+                            // If sign in fails, display a message to the user. If sign in succeeds
+                            // the auth state listener will be notified and logic to handle the
+                            // signed in user can be handled in the listener.
                             if (!task.isSuccessful()) {
                                 String err = task.getException().getMessage();
-                                Toast.makeText(getActivity(),"Sign in failed:" + err, Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getActivity(), "Sign up failed:" + err,
+                                        Toast.LENGTH_SHORT).show();
                             }
-                            else {
-                                Toast.makeText(getActivity(),"Sign in Succeed", Toast.LENGTH_SHORT).show();
+                            else{
+                                Toast.makeText(getActivity(), "Sign up Succeed",
+                                        Toast.LENGTH_SHORT).show();
+                                //String UID = task.getResult().getUser().getUid();
+                                //DatabaseReference database = FirebaseDatabase.getInstance().getReference("User");
+                                //database.child(UID);
                             }
                         }
                     });
         }
     }
-
-    private void setRegisterFragment() {
-        RegisterFragment RegisterFragment = new RegisterFragment();
-        FragmentManager manager = ((MainActivity)getActivity()).getSupportFragmentManager();
-        manager.beginTransaction().replace(R.id.main_content,RegisterFragment).commit();
-    }
-
-
-//    private void attemptRegister() {
-//        mEmailView.setError(null);
-//        mPasswordView.setError(null);
-//
-//        String email = mEmailView.getText().toString();
-//        String password = mPasswordView.getText().toString();
-//
-//        boolean cancel = false;
-//        View focusView = null;
-//
-//        // Check for a valid password, if the user entered one.
-//        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
-//            mPasswordView.setError(getString(R.string.error_invalid_password));
-//            focusView = mPasswordView;
-//            cancel = true;
-//        }
-//
-//            // Check for a valid email address.
-//            if (TextUtils.isEmpty(email)) {
-//                mEmailView.setError(getString(R.string.error_field_required));
-//                focusView = mEmailView;
-//                cancel = true;
-//            } else if (!isEmailValid(email)) {
-//                mEmailView.setError(getString(R.string.error_invalid_email));
-//                focusView = mEmailView;
-//                cancel = true;
-//            }
-//
-//            if (cancel) {
-//                // There was an error; don't attempt login and focus the first
-//                // form field with an error.
-//                focusView.requestFocus();
-//            } else {
-//                // Show a progress spinner, and kick off a background task to
-//                // perform the user login attempt.
-//                mAuth.createUserWithEmailAndPassword(email, password)
-//                        .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
-//                            @Override
-//                            public void onComplete(@NonNull Task<AuthResult> task) {
-//                                //Log.d("Login", "createUserWithEmail:onComplete:" + task.isSuccessful());
-//
-//                                // If sign in fails, display a message to the user. If sign in succeeds
-//                                // the auth state listener will be notified and logic to handle the
-//                                // signed in user can be handled in the listener.
-//                                if (!task.isSuccessful()) {
-//                                    String err = task.getException().getMessage();
-//                                    Toast.makeText(getActivity(), "Sign up failed:" + err,
-//                                            Toast.LENGTH_SHORT).show();
-//                                }
-//                                else{
-//                                    Toast.makeText(getActivity(), "Sign up Succeed",
-//                                            Toast.LENGTH_SHORT).show();
-//                                }
-//                            }
-//                        });
-//        }
-//    }
 
     /**
      * This interface must be implemented by activities that contain this
@@ -247,5 +189,9 @@ public class LoginFragment extends Fragment {
 
     private boolean isPasswordValid(String password) {
         return password.length() >= 6;
+    }
+
+    private boolean isPasswordRepeatedCorrectly(String password, String repeat) {
+        return password.equals(repeat);
     }
 }
