@@ -142,6 +142,7 @@ public class RegisterFragment extends Fragment {
         } else {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
+            final String emailAddress = email;
             mAuth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
                         @Override
@@ -159,9 +160,9 @@ public class RegisterFragment extends Fragment {
                             else{
                                 Toast.makeText(getActivity(), "Sign up Succeed",
                                         Toast.LENGTH_SHORT).show();
-                                //String UID = task.getResult().getUser().getUid();
-                                //DatabaseReference database = FirebaseDatabase.getInstance().getReference("User");
-                                //database.child(UID);
+                                String UID = task.getResult().getUser().getUid();
+                                DatabaseReference database = FirebaseDatabase.getInstance().getReference();
+                                database.child("users").child(UID).child("email").setValue(emailAddress);
                             }
                         }
                     });
