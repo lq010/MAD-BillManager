@@ -88,6 +88,7 @@ public class RegisterFragment extends Fragment {
                 attemptRegister();
             }
         });
+
         mLoginFormView = v.findViewById(R.id.login_form);
         mProgressView = v.findViewById(R.id.login_progress);
         return v;
