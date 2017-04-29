@@ -6,17 +6,25 @@ import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.renderer.DataRenderer;
+import com.google.android.gms.appinvite.AppInvite;
+import com.google.android.gms.appinvite.AppInviteInvitationResult;
+import com.google.android.gms.appinvite.AppInviteReferral;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -49,7 +57,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener{
 
     private static final int PROFILE_SETTING = 100000;
     private static final int Logout = 1000001;
@@ -69,6 +77,8 @@ public class MainActivity extends AppCompatActivity {
     private String userAddress = "XXX@XXXXX.XX";
     //private Uri photoUrl;
     //private String UID = "";
+
+    private GoogleApiClient mGoogleApiClient;
 
     private boolean isGroupDrawerInited = false;
     @Override
@@ -98,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
                     LoginFragment loginFragment = new LoginFragment();
                     FragmentManager manager = getSupportFragmentManager();
                     manager.beginTransaction().replace(R.id.main_content,loginFragment).commit();
-
+                    isGroupDrawerInited =false;
 
                 }
                 // ...
@@ -203,7 +213,35 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+    //firebase invites
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(AppInvite.API)
+                .enableAutoManage(this, this)
+                .build();
 
+        // Check for App Invite invitations and launch deep-link activity if possible.
+        // Requires that an Activity is registered in AndroidManifest.xml to handle
+        // deep-link URLs.
+        boolean autoLaunchDeepLink = true;
+        AppInvite.AppInviteApi.getInvitation(mGoogleApiClient, this, autoLaunchDeepLink)
+                .setResultCallback(
+                        new ResultCallback<AppInviteInvitationResult>() {
+                            @Override
+                            public void onResult(AppInviteInvitationResult result) {
+                                Log.d("MainActivity", "getInvitation:onResult:" + result.getStatus());
+                                if (result.getStatus().isSuccess()) {
+                                    // Extract information from the intent
+                                    Intent intent = result.getInvitationIntent();
+                                    String deepLink = AppInviteReferral.getDeepLink(intent);
+                                    String invitationId = AppInviteReferral.getInvitationId(intent);
+
+                                    // Because autoLaunchDeepLink = true we don't have to do anything
+                                    // here, but we could set that to false and manually choose
+                                    // an Activity to launch to handle the deep link here.
+                                    // ...
+                                }
+                            }
+                        });
     }
 
     private OnCheckedChangeListener onCheckedChangeListener = new OnCheckedChangeListener() {
@@ -418,5 +456,12 @@ public class MainActivity extends AppCompatActivity {
 
     public FirebaseAuth getmAuth() {
         return mAuth;
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.d("MainActivity", "onConnectionFailed:" + connectionResult);
+        ViewGroup container = (ViewGroup) findViewById(R.id.snackbar_layout);
+        Snackbar.make(container, getString(R.string.google_play_services_error), Snackbar.LENGTH_SHORT).show();
     }
 }

@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -25,6 +26,8 @@ import android.widget.Toast;
 
 import com.firebase.ui.database.FirebaseListAdapter;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.android.gms.appinvite.AppInviteInvitation;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -42,7 +45,9 @@ import com.mobile.madassignment.util.DataFormat;
 
 import java.sql.Date;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -55,7 +60,8 @@ import java.util.List;
  */
 public class MainFragment extends Fragment {
 
-
+    private static final String TAG = "MainFragment";
+    private static final int REQUEST_INVITE = 0;
 
     private LinearLayoutManager mLinearLayoutManager;
     private RecyclerView myExpenseRecyclerView;
@@ -71,6 +77,7 @@ public class MainFragment extends Fragment {
     private TextView tv_mySpending;
     private TextView tv_totalSpending;
     private RecyclerView rv_members;
+    private LinearLayout ll_invite_button;
 
     private List<Long> expenseKeys;
     private int numOfmembers=1;
@@ -78,6 +85,8 @@ public class MainFragment extends Fragment {
     private GroupMember me;
     private FirebaseAuth mAuth;
     private FirebaseUser user;
+    private Map<String, String> suerId_nameMap;
+
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -137,7 +146,7 @@ public class MainFragment extends Fragment {
         mLinearLayoutManager = new LinearLayoutManager(this.getActivity());
         rv_members = (RecyclerView)v.findViewById(R.id.rv_members);
         rv_balance = (RelativeLayout)v.findViewById(R.id.rv_balance);
-
+        ll_invite_button = (LinearLayout)v.findViewById(R.id.add_user_to_group);
         tv_balence_value = (TextView)v.findViewById(R.id.tv_my_balance);
         tv_owenORowendText= (TextView)v.findViewById(R.id.tv_own_or_owned);
         tv_mySpending= (TextView)v.findViewById(R.id.tv_my_spending);
@@ -151,7 +160,34 @@ public class MainFragment extends Fragment {
         myExpenseRecyclerView.setLayoutManager(mLinearLayoutManager);
 
         mDatabaseRef  = FirebaseDatabase.getInstance().getReference();
+        suerId_nameMap = new HashMap<>();
+        mDatabaseRef.child("groups").child(group_key).child("members").addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                suerId_nameMap.put(dataSnapshot.getKey(),dataSnapshot.getValue().toString());
+                Log.d("put to map", dataSnapshot.getKey()+"= "+dataSnapshot.getValue().toString());
+            }
 
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
 
         mFirebaseAdapter = new FirebaseRecyclerAdapter<Expense, ExpenseViewHolder>(
                 Expense.class,
@@ -175,7 +211,8 @@ public class MainFragment extends Fragment {
                     viewHolder.payer.setText("you payed ");
                     viewHolder.payer.setTextColor(Color.GREEN);
                 }else {
-                    viewHolder.payer.setText( expense.getPayer()+ " payed ");
+
+                    viewHolder.payer.setText( suerId_nameMap.get(expense.getPayer())+ " payed ");
                     viewHolder.payer.setTextColor(Color.RED);
                 }
                 switch (type){
@@ -227,29 +264,6 @@ public class MainFragment extends Fragment {
             }
         };
 
-//        mDatabaseRef.child("expenses").child(group_key).addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//                float mySpending = totalSpending/numOfmembers;
-//                Log.v("numOfmembers ", numOfmembers+"");
-//                Log.v("mySpending ", mySpending+"");
-//                float mybalance = me.getPayed()-mySpending;
-//                tv_balence_value.setText(DataFormat.myDFloatFormat(mybalance));
-//                if(mybalance<0){
-//                    tv_owenORowendText.setText("you owen");
-//                    tv_owenORowendText.setBackgroundColor(Color.RED);
-//                }
-//
-//                tv_mySpending.setText(DataFormat.myDFloatFormat(mySpending));
-//                tv_totalSpending.setText(DataFormat.myDFloatFormat(totalSpending));
-//
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//                Toast.makeText(getActivity(),"Firebase error, please connect the internet, or try again latter",Toast.LENGTH_SHORT);
-//            }
-//        });
 
         myExpenseRecyclerView.setLayoutManager(mLinearLayoutManager);
         myExpenseRecyclerView.setAdapter(mFirebaseAdapter);
@@ -279,39 +293,10 @@ public class MainFragment extends Fragment {
 
             }
         });
-//        groupMembersRef.addChildEventListener(new ChildEventListener() {
-//            @Override
-//            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-//
-//                String userId = dataSnapshot.getKey();
-//                Log.v("test key",userId);
-//                groupAdapter.getNames().add(dataSnapshot.getValue().toString());
-//                groupAdapter.notifyDataSetChanged();
-//            }
-//
-//            @Override
-//            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-//                // TODO
-//            }
-//
-//            @Override
-//            public void onChildRemoved(DataSnapshot dataSnapshot) {
-//
-//            }
-//
-//            @Override
-//            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-//
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//
-//            }
-//        });
+
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this.getActivity(),LinearLayoutManager.HORIZONTAL,false);
         
-        groupAdapter.getNames().add("add_new_member");
+       // groupAdapter.getNames().add("add_new_member");
 
         rv_members.setLayoutManager(layoutManager);
         rv_members.setAdapter(groupAdapter);
@@ -319,9 +304,7 @@ public class MainFragment extends Fragment {
         add_expense.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                AddExpenseFragment addExpenseFragment = AddExpenseFragment.newInstance("1", "2");
-//                FragmentManager manager = getActivity().getSupportFragmentManager();
-//                manager.beginTransaction().replace(R.id.main_content, addExpenseFragment).commit();
+
                 Bundle bundle = new Bundle();
                 bundle.putString("group_key",group_key);
                 Intent intent = new Intent(getActivity(),AddNewExpenseActivity.class);
@@ -340,6 +323,21 @@ public class MainFragment extends Fragment {
                 startActivity(intent);
             }
         });
+
+        ll_invite_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new AppInviteInvitation.IntentBuilder(getString(R.string.invitation_title))
+                        .setMessage(getString(R.string.invitation_message))
+                        .setDeepLink(Uri.parse(getString(R.string.invitation_deep_link)+"$"+group_key))
+                        .setCustomImage(Uri.parse(getString(R.string.invitation_custom_image)))
+                        .setCallToActionText(getString(R.string.invitation_cta))
+
+                        .build();
+                startActivityForResult(intent,REQUEST_INVITE);
+            }
+        });
+
 
         return v;
 
@@ -360,8 +358,34 @@ public class MainFragment extends Fragment {
         super.onDetach();
         mListener = null;
     }
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
 
+        if (requestCode == REQUEST_INVITE) {
+            if (resultCode == android.app.Activity.RESULT_OK) {
+               // DatabaseReference invitations = mDatabaseRef.child("invitations");
+                // Get the invitation IDs of all sent messages
+                String[] ids = AppInviteInvitation.getInvitationIds(resultCode, data);
 
+                for (String id : ids) {
+
+                    Log.d(TAG, "onActivityResult: sent invitation " + id);
+                }
+            } else {
+                // Sending failed or it was canceled, show failure message to the user
+                // [START_EXCLUDE]
+                showMessage(getString(R.string.send_failed));
+                // [END_EXCLUDE]
+            }
+        }
+    }
+    // [END on_activity_result]
+
+    private void showMessage(String msg) {
+        ViewGroup container = (ViewGroup) getActivity().findViewById(R.id.snackbar_layout);
+        Snackbar.make(container, msg, Snackbar.LENGTH_SHORT).show();
+    }
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);

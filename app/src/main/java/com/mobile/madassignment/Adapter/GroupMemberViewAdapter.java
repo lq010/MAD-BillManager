@@ -1,11 +1,14 @@
 package com.mobile.madassignment.Adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.mobile.madassignment.AddGroupActivity;
+import com.mobile.madassignment.JoinGroupActivity;
 import com.mobile.madassignment.R;
 
 import java.util.ArrayList;
@@ -35,12 +38,20 @@ public class GroupMemberViewAdapter extends RecyclerView.Adapter<GroupMemberView
     }
 
     @Override
-    public void onBindViewHolder(GroupMemberViewHolder holder, int position) {
+    public void onBindViewHolder(final GroupMemberViewHolder holder, int position) {
         String name = names.get(position);
         holder.name.setText(name);
-        if(name=="add_new_member"){
-            holder.photo.setImageResource(R.drawable.add);
-        }
+//        if(name=="add_new_member"){
+//            holder.photo.setImageResource(R.drawable.add);
+////            holder.itemView.setOnClickListener(new View.OnClickListener() {
+////                @Override
+////                public void onClick(View view) {
+////                    Intent intent = new Intent(holder.getContext(), AddGroupActivity.class);
+////                    holder.getContext().startActivity(intent);
+////                }
+////            });
+//        }
+
     }
 
     @Override
