@@ -31,6 +31,7 @@
 
 
     //login
+    <string name="prompt_userName">User Name</string>
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password</string>
     <string name="action_sign_in">Sign in</string>
@@ -45,4 +46,6 @@
         completions."
     </string>
     <string name="auth_failed">sign up failed</string>
+
+    <string name="yourname">your name</string>
 </resources>

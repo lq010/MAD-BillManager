@@ -155,6 +155,8 @@ public class LoginFragment extends Fragment {
                             }
                             else {
                                 Toast.makeText(getActivity(),"Sign in Succeed", Toast.LENGTH_SHORT).show();
+                                getActivity().getSupportFragmentManager().beginTransaction().remove(LoginFragment.this).commit();
+
                             }
                         }
                     });

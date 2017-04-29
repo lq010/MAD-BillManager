@@ -41,7 +41,9 @@ public class AddGroupActivity extends AppCompatActivity implements AdapterView.O
     private Button done;
     private ImageView back;
     private EditText et_groupName;
+    private EditText et_userName;
     private Spinner s_currency;
+
     private DatabaseReference mFirebaseDatabaseReference;
 
     private FirebaseAuth mAuth;
@@ -64,9 +66,12 @@ public class AddGroupActivity extends AppCompatActivity implements AdapterView.O
         done = (Button)findViewById(R.id.bt_add_group);
         back = (ImageView)findViewById(R.id.iv_new_group_back);
         et_groupName = (EditText)findViewById(R.id.et_group_name);
+        et_userName = (EditText)findViewById(R.id.et_user_name);
         s_currency = (Spinner) findViewById(R.id.currency_spinner);
 
-
+        if(user!= null){
+            et_userName.setText(user.getDisplayName());
+        }
         Set<Currency> myset = getAvailableCurrencies();
         List<Currency> myarray = new ArrayList<>(myset);
         ArrayAdapter<Currency> currencyAdapter = new ArrayAdapter<Currency>(this,
@@ -100,27 +105,32 @@ public class AddGroupActivity extends AppCompatActivity implements AdapterView.O
             @Override
             public void onClick(View view) {
                 if(user!=null){
-                    String name = et_groupName.getText().toString();
-                    if(name.trim().matches("")){
+                    String groupName = et_groupName.getText().toString();
+                    String userName = et_userName.getText().toString();
+                    if(groupName.trim().matches("")){
                         Toast.makeText(getApplicationContext(),"please enter a group name",Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if(userName.trim().matches("")){
+                        Toast.makeText(getApplicationContext(),"please enter your name",Toast.LENGTH_SHORT).show();
                         return;
                     }
                     Calendar calendar = new GregorianCalendar();
                     Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-                    Toast.makeText(getApplicationContext(),name,Toast.LENGTH_SHORT).show();
-                    Group newGroup = new Group(name,
+                    Toast.makeText(getApplicationContext(),groupName,Toast.LENGTH_SHORT).show();
+                    Group newGroup = new Group(groupName,
                             s_currency.getSelectedItem().toString(),null);
                     ///TODO get the usrid
                     Map<String,String> group_member = new HashMap<String, String>();
 
-                    group_member.put(user.getUid(),user.getDisplayName());
+                    group_member.put(user.getUid(),userName);
                     newGroup.setMembers(group_member);
 
                     String groudId =  mFirebaseDatabaseReference.push().getKey();
                     //add group (under groups node)
                     mFirebaseDatabaseReference.child("groups").child(groudId).setValue(newGroup);
                     // under users/groups
-                    mFirebaseDatabaseReference.child("users").child("groups").child(groudId).setValue("true");
+                    mFirebaseDatabaseReference.child("users").child(user.getUid()).child("groups").child(groudId).setValue("true");
                     AddGroupActivity.this.finish();
 
                 }else{

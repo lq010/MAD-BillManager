@@ -25,6 +25,8 @@ import android.widget.Toast;
 
 import com.firebase.ui.database.FirebaseListAdapter;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -74,7 +76,8 @@ public class MainFragment extends Fragment {
     private int numOfmembers=1;
     private float totalSpending;
     private GroupMember me;
-
+    private FirebaseAuth mAuth;
+    private FirebaseUser user;
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -140,6 +143,8 @@ public class MainFragment extends Fragment {
         tv_mySpending= (TextView)v.findViewById(R.id.tv_my_spending);
         tv_totalSpending= (TextView)v.findViewById(R.id.tv_group_spending);
         expenseKeys = new ArrayList<>();
+        mAuth = FirebaseAuth.getInstance();
+        user = mAuth.getCurrentUser();
         me = new GroupMember();
 
         mLinearLayoutManager.setStackFromEnd(false);
@@ -166,7 +171,7 @@ public class MainFragment extends Fragment {
                     viewHolder.type.setText(expense.getDescription());
                 }
                 viewHolder.cost.setText(expense.getCost() +" €");
-                if(expense.getPayer().matches("userid1")){  //TODO
+                if(expense.getPayer().matches(user.getUid())){  //TODO
                     viewHolder.payer.setText("you payed ");
                     viewHolder.payer.setTextColor(Color.GREEN);
                 }else {
@@ -193,7 +198,7 @@ public class MainFragment extends Fragment {
 
                 //TODO get userid (userid1 is a default id)
                 if(!expenseKeys.contains(expense.getCreateTime())){
-                    if (expense.getPayer().matches("userid1")) {
+                    if (expense.getPayer().matches(user.getUid())) {
                         float temp = me.getPayed() + expense.getCost();
                         me.setPayed(temp);
                     }
@@ -209,6 +214,7 @@ public class MainFragment extends Fragment {
                     float mybalance = me.getPayed() - mySpending;
                     tv_balence_value.setText(DataFormat.myDFloatFormat(mybalance));
                     if (mybalance < 0) {
+                        Log.v("Mybalance",mybalance+"");
                         tv_owenORowendText.setText("you owen");
                         tv_owenORowendText.setBackgroundColor(Color.RED);
                     }

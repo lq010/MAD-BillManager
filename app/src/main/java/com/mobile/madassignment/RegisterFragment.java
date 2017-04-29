@@ -19,6 +19,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -39,6 +41,7 @@ public class RegisterFragment extends Fragment {
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
     private EditText mRepeatView;
+    private EditText mUserNameView;
     private View mProgressView;
     private View mLoginFormView;
 
@@ -81,6 +84,7 @@ public class RegisterFragment extends Fragment {
         mEmailView = (AutoCompleteTextView) v.findViewById(R.id.email);
         mPasswordView = (EditText) v.findViewById(R.id.password);
         mRepeatView = (EditText) v.findViewById(R.id.repeat);
+        mUserNameView = (EditText) v.findViewById(R.id.username);
         Button mEmailRegisterButton = (Button) v.findViewById(R.id.email_Register_button);
         mEmailRegisterButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -105,6 +109,7 @@ public class RegisterFragment extends Fragment {
         mEmailView.setError(null);
         mPasswordView.setError(null);
 
+        final String userName = mUserNameView.getText().toString();
         String email = mEmailView.getText().toString();
         String password = mPasswordView.getText().toString();
         String repeat = mRepeatView.getText().toString();
@@ -125,8 +130,14 @@ public class RegisterFragment extends Fragment {
             cancel = true;
         }
 
+
+
         // Check for a valid email address.
-        if (TextUtils.isEmpty(email)) {
+        if(TextUtils.isEmpty(userName)) {
+            mUserNameView.setError("user name is required");
+            focusView = mUserNameView;
+            cancel = true;
+        }else if (TextUtils.isEmpty(email)) {
             mEmailView.setError(getString(R.string.error_field_required));
             focusView = mEmailView;
             cancel = true;
@@ -161,9 +172,17 @@ public class RegisterFragment extends Fragment {
                             else{
                                 Toast.makeText(getActivity(), "Sign up Succeed",
                                         Toast.LENGTH_SHORT).show();
+                                FirebaseUser user = task.getResult().getUser();
+                                UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                        .setDisplayName(userName)
+                                      //.setPhotoUri(Uri.parse("https://example.com/jane-q-user/profile.jpg"))
+                                        .build();
+                                user.updateProfile(profileUpdates);
                                 String UID = task.getResult().getUser().getUid();
+
                                 DatabaseReference database = FirebaseDatabase.getInstance().getReference();
                                 database.child("users").child(UID).child("email").setValue(emailAddress);
+                                database.child("users").child(UID).child("name").setValue(userName);
                             }
                         }
                     });
