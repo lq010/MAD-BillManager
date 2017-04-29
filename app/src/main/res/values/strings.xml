@@ -48,4 +48,8 @@
     <string name="auth_failed">sign up failed</string>
 
     <string name="yourname">your name</string>
+    <string name="pin_join_group">Join Group With Pin</string>
+    <string name="done">join</string>
+    <string name="pin_code">Pin code</string>
+    <string name="str_group_name">Group name</string>
 </resources>

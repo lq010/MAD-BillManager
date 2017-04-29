@@ -29,6 +29,7 @@
         <activity android:name=".AddNewExpenseActivity" />
         <activity android:name=".GroupBalanceActivity" />
         <activity android:name=".BalanceActivity" />
+        <activity android:name=".JoinGroupActivity"></activity>
     </application>
 
 </manifest>
