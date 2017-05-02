@@ -99,16 +99,21 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                     // User is signed in
 
                     Log.v( "starting fragment", "onAuthStateChanged:signed_in:" + user.getUid());
-                    if(!isGroupDrawerInited)
+                    if(!isGroupDrawerInited){
                         initGroupList(user);
+                    }
+
 
                 } else {
                     headerResult.updateProfile(defaultprofile);
+
                     result.removeAllItems();
+                    menuId_group.clear();
+                    isGroupDrawerInited =false;
                     LoginFragment loginFragment = new LoginFragment();
                     FragmentManager manager = getSupportFragmentManager();
                     manager.beginTransaction().replace(R.id.main_content,loginFragment).commit();
-                    isGroupDrawerInited =false;
+
 
                 }
                 // ...
@@ -379,79 +384,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     isGroupDrawerInited = true;
 
- /***old
-        //get data from firebase
-        DatabaseReference groupRef = mRootRef.child("groups");
-
-
-        groupRef.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                ++id_counter;
-                int num_members = (int)dataSnapshot.child("members").getChildrenCount();
-                Log.v("num_members" ,num_members+" ");
-                result.addItem(
-                        new PrimaryDrawerItem()
-                                .withName(dataSnapshot.child("name").getValue().toString())
-                                .withDescription(num_members + " members")
-                                .withDescriptionTextColor(Color.parseColor("#b4b6ba"))
-                                .withIcon(R.drawable.profile)
-                                .withIdentifier(id_counter)
-                                .withSelectable(true)
-                                .withBadgeStyle(new BadgeStyle()
-                                        .withTextColor(Color.WHITE)
-                                        .withColorRes(R.color.md_red_700))
-                );
-                Log.v("fire_data", dataSnapshot.getKey());
-
-                menuId_group.put(id_counter,dataSnapshot.getKey());
-                Log.v("map_id_data",id_counter+"..."+menuId_group.get(id_counter));
-
-
-//                if(id_counter==1){
-//                    String group_key= menuId_group.get(id_counter);
-//                    Log.v("default fragment", "item id:"+1 +" group_key:"+ group_key);
-//                    // Toast.makeText(MainActivity.this, id + group_key, Toast.LENGTH_SHORT).show();
-//                    Bundle bundle = new Bundle();
-//                    bundle.putString("group_key", group_key);
-//
-//                    MainFragment mainFragment = new MainFragment();
-//                    FragmentManager manager = getSupportFragmentManager();
-//
-//                    mainFragment.setArguments(bundle);
-//                    manager.beginTransaction().replace(R.id.main_content,mainFragment).commit();
-//                }
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-                String removedGroupKey= dataSnapshot.getKey();
-                for(long id: menuId_group.keySet()){
-                    if(menuId_group.get(id) == removedGroupKey){
-                        //   menu.removeItem(id);
-                        Log.v("groupremoved",removedGroupKey+"->"+id);
-                        break;
-                    }
-                }
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-
-  **/
     }
 
     public FirebaseAuth getmAuth() {
