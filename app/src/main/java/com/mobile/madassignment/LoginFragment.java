@@ -1,5 +1,6 @@
 package com.mobile.madassignment;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
@@ -32,7 +33,7 @@ import java.util.concurrent.Executor;
  * Use the {@link LoginFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class LoginFragment extends Fragment {
+public class LoginFragment extends Fragment implements View.OnClickListener{
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     //private static final String ARG_PARAM1 = "param1";
@@ -49,6 +50,9 @@ public class LoginFragment extends Fragment {
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+    private Button btnSignin;
+
+    private ProgressDialog progressDialog;
 
     private OnFragmentInteractionListener mListener;
 
@@ -81,6 +85,8 @@ public class LoginFragment extends Fragment {
             //mParam1 = getArguments().getString(ARG_PARAM1);
             //mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
+
     }
 
     @Override
@@ -91,6 +97,10 @@ public class LoginFragment extends Fragment {
         mAuth = ((MainActivity)getActivity()).getmAuth();
         mEmailView = (AutoCompleteTextView) v.findViewById(R.id.email);
         mPasswordView = (EditText) v.findViewById(R.id.password);
+
+        btnSignin= (Button) v.findViewById(R.id.email_sign_in_button);
+        progressDialog= new ProgressDialog(this.getContext());
+
         Button mEmailSignInButton = (Button) v.findViewById(R.id.email_sign_in_button);
         mEmailSignInButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -105,12 +115,15 @@ public class LoginFragment extends Fragment {
                 setRegisterFragment();
             }
         });
+
         mLoginFormView = v.findViewById(R.id.login_form);
         mProgressView = v.findViewById(R.id.login_progress);
         return v;
     }
 
     private void attemptLogin() {
+        progressDialog.setMessage("Loggin in...");
+        progressDialog.show();
         mEmailView.setError(null);
         mPasswordView.setError(null);
 
@@ -150,10 +163,12 @@ public class LoginFragment extends Fragment {
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             // If sign in fails
                             if (!task.isSuccessful()) {
+                                progressDialog.dismiss();
                                 String err = task.getException().getMessage();
                                 Toast.makeText(getActivity(),"Sign in failed:" + err, Toast.LENGTH_SHORT).show();
                             }
                             else {
+                                progressDialog.dismiss();
                                 Toast.makeText(getActivity(),"Sign in Succeed", Toast.LENGTH_SHORT).show();
                                 getActivity().getSupportFragmentManager().beginTransaction().remove(LoginFragment.this).commit();
                             }
@@ -166,6 +181,13 @@ public class LoginFragment extends Fragment {
         RegisterFragment RegisterFragment = new RegisterFragment();
         FragmentManager manager = ((MainActivity)getActivity()).getSupportFragmentManager();
         manager.beginTransaction().replace(R.id.main_content,RegisterFragment).commit();
+    }
+
+    @Override
+    public void onClick(View view) {
+        if(view==btnSignin){
+            attemptLogin();
+        }
     }
 
 
