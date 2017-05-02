@@ -1,5 +1,6 @@
 package com.mobile.madassignment;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
@@ -33,11 +34,13 @@ import com.google.firebase.database.FirebaseDatabase;
  * Use the {@link RegisterFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class RegisterFragment extends Fragment {
+public class RegisterFragment extends Fragment implements View.OnClickListener{
 
     private static final String ARG_AUTH = "mAuth";
     private FirebaseAuth mAuth;
 
+    private Button btnRegister;
+    private ProgressDialog progressDialog;
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
     private EditText mRepeatView;
@@ -85,6 +88,10 @@ public class RegisterFragment extends Fragment {
         mPasswordView = (EditText) v.findViewById(R.id.password);
         mRepeatView = (EditText) v.findViewById(R.id.repeat);
         mUserNameView = (EditText) v.findViewById(R.id.username);
+
+        btnRegister = (Button) v.findViewById(R.id.email_Register_button);
+        progressDialog= new ProgressDialog(this.getContext());
+
         Button mEmailRegisterButton = (Button) v.findViewById(R.id.email_Register_button);
         mEmailRegisterButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -106,6 +113,10 @@ public class RegisterFragment extends Fragment {
     }
 
     private void attemptRegister() {
+
+        progressDialog.setMessage("Wait a moment...");
+        progressDialog.show();
+
         mEmailView.setError(null);
         mPasswordView.setError(null);
 
@@ -165,11 +176,13 @@ public class RegisterFragment extends Fragment {
                             // the auth state listener will be notified and logic to handle the
                             // signed in user can be handled in the listener.
                             if (!task.isSuccessful()) {
+                                progressDialog.dismiss();
                                 String err = task.getException().getMessage();
                                 Toast.makeText(getActivity(), "Sign up failed:" + err,
                                         Toast.LENGTH_SHORT).show();
                             }
                             else{
+                                progressDialog.dismiss();
                                 Toast.makeText(getActivity(), "Sign up Succeed",
                                         Toast.LENGTH_SHORT).show();
                                 FirebaseUser user = task.getResult().getUser();
@@ -188,6 +201,14 @@ public class RegisterFragment extends Fragment {
                     });
         }
     }
+
+    @Override
+    public void onClick(View view) {
+        if(view==btnRegister){
+            attemptRegister();
+        }
+    }
+
 
     /**
      * This interface must be implemented by activities that contain this

@@ -1,5 +1,6 @@
 package com.mobile.madassignment;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
@@ -32,7 +33,7 @@ import java.util.concurrent.Executor;
  * Use the {@link LoginFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class LoginFragment extends Fragment {
+public class LoginFragment extends Fragment implements View.OnClickListener{
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     //private static final String ARG_PARAM1 = "param1";
@@ -49,6 +50,9 @@ public class LoginFragment extends Fragment {
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+    private Button btnSignin;
+
+    private ProgressDialog progressDialog;
 
     private OnFragmentInteractionListener mListener;
 
@@ -81,6 +85,8 @@ public class LoginFragment extends Fragment {
             //mParam1 = getArguments().getString(ARG_PARAM1);
             //mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
+
     }
 
     @Override
@@ -91,6 +97,10 @@ public class LoginFragment extends Fragment {
         mAuth = ((MainActivity)getActivity()).getmAuth();
         mEmailView = (AutoCompleteTextView) v.findViewById(R.id.email);
         mPasswordView = (EditText) v.findViewById(R.id.password);
+
+        btnSignin= (Button) v.findViewById(R.id.email_sign_in_button);
+        progressDialog= new ProgressDialog(this.getContext());
+
         Button mEmailSignInButton = (Button) v.findViewById(R.id.email_sign_in_button);
         mEmailSignInButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -105,12 +115,15 @@ public class LoginFragment extends Fragment {
                 setRegisterFragment();
             }
         });
+
         mLoginFormView = v.findViewById(R.id.login_form);
         mProgressView = v.findViewById(R.id.login_progress);
         return v;
     }
 
     private void attemptLogin() {
+        progressDialog.setMessage("Loggin in...");
+        progressDialog.show();
         mEmailView.setError(null);
         mPasswordView.setError(null);
 
@@ -150,10 +163,12 @@ public class LoginFragment extends Fragment {
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             // If sign in fails
                             if (!task.isSuccessful()) {
+                                progressDialog.dismiss();
                                 String err = task.getException().getMessage();
                                 Toast.makeText(getActivity(),"Sign in failed:" + err, Toast.LENGTH_SHORT).show();
                             }
                             else {
+                                progressDialog.dismiss();
                                 Toast.makeText(getActivity(),"Sign in Succeed", Toast.LENGTH_SHORT).show();
                                 getActivity().getSupportFragmentManager().beginTransaction().remove(LoginFragment.this).commit();
                             }
@@ -168,75 +183,14 @@ public class LoginFragment extends Fragment {
         manager.beginTransaction().replace(R.id.main_content,RegisterFragment).commit();
     }
 
+    @Override
+    public void onClick(View view) {
+        if(view==btnSignin){
+            attemptLogin();
+        }
+    }
 
-//    private void attemptRegister() {
-//        mEmailView.setError(null);
-//        mPasswordView.setError(null);
-//
-//        String email = mEmailView.getText().toString();
-//        String password = mPasswordView.getText().toString();
-//
-//        boolean cancel = false;
-//        View focusView = null;
-//
-//        // Check for a valid password, if the user entered one.
-//        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
-//            mPasswordView.setError(getString(R.string.error_invalid_password));
-//            focusView = mPasswordView;
-//            cancel = true;
-//        }
-//
-//            // Check for a valid email address.
-//            if (TextUtils.isEmpty(email)) {
-//                mEmailView.setError(getString(R.string.error_field_required));
-//                focusView = mEmailView;
-//                cancel = true;
-//            } else if (!isEmailValid(email)) {
-//                mEmailView.setError(getString(R.string.error_invalid_email));
-//                focusView = mEmailView;
-//                cancel = true;
-//            }
-//
-//            if (cancel) {
-//                // There was an error; don't attempt login and focus the first
-//                // form field with an error.
-//                focusView.requestFocus();
-//            } else {
-//                // Show a progress spinner, and kick off a background task to
-//                // perform the user login attempt.
-//                mAuth.createUserWithEmailAndPassword(email, password)
-//                        .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
-//                            @Override
-//                            public void onComplete(@NonNull Task<AuthResult> task) {
-//                                //Log.d("Login", "createUserWithEmail:onComplete:" + task.isSuccessful());
-//
-//                                // If sign in fails, display a message to the user. If sign in succeeds
-//                                // the auth state listener will be notified and logic to handle the
-//                                // signed in user can be handled in the listener.
-//                                if (!task.isSuccessful()) {
-//                                    String err = task.getException().getMessage();
-//                                    Toast.makeText(getActivity(), "Sign up failed:" + err,
-//                                            Toast.LENGTH_SHORT).show();
-//                                }
-//                                else{
-//                                    Toast.makeText(getActivity(), "Sign up Succeed",
-//                                            Toast.LENGTH_SHORT).show();
-//                                }
-//                            }
-//                        });
-//        }
-//    }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
