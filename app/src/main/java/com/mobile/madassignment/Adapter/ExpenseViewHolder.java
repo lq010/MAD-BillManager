@@ -16,6 +16,7 @@ public  class ExpenseViewHolder extends RecyclerView.ViewHolder {
     public ImageView typeImgView;
     public TextView cost;
     public TextView payer;
+    public TextView createTime;
     //public CircleImageView messengerImageView;
 
     public ExpenseViewHolder(View v) {
@@ -24,6 +25,6 @@ public  class ExpenseViewHolder extends RecyclerView.ViewHolder {
         typeImgView = (ImageView) itemView.findViewById(R.id.iv_expense_type_img);
         cost = (TextView) itemView.findViewById(R.id.tv_item_item_cost);
         payer = (TextView) itemView.findViewById(R.id.tv_payer);
-
+        createTime = (TextView) v.findViewById(R.id.tv_expense_date);
     }
 }

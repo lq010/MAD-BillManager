@@ -11,6 +11,9 @@ public class GroupMember {
     private String name;
     private float spending;
     private float payed;
+    private float balance;
+
+
 
     public GroupMember() {
     }
@@ -40,5 +43,11 @@ public class GroupMember {
         this.payed = payed;
     }
 
+    public float getBalance() {
+        return balance;
+    }
 
+    public void setBalance(float balance) {
+        this.balance = balance;
+    }
 }

@@ -1,5 +1,6 @@
 package com.mobile.madassignment.models;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -54,5 +55,11 @@ public class Expense {
 
     public long getCreateTime() {
         return createTime;
+    }
+
+    public  String getFormatDate(){
+        Date date = new Date(createTime);
+        SimpleDateFormat df = new SimpleDateFormat("HH:mm dd-MMM-yyyy");
+        return  df.format(date);
     }
 }

@@ -1,6 +1,5 @@
 package com.mobile.madassignment;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -8,15 +7,12 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -24,10 +20,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import com.firebase.ui.database.FirebaseListAdapter;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.android.gms.appinvite.AppInviteInvitation;
-import com.google.android.gms.common.api.ResultCallback;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -38,12 +32,15 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.mobile.madassignment.Adapter.ExpenseViewHolder;
 import com.mobile.madassignment.Adapter.GroupMemberViewAdapter;
-import com.mobile.madassignment.Adapter.GroupMemberViewHolder;
 import com.mobile.madassignment.models.Expense;
 import com.mobile.madassignment.models.GroupMember;
 import com.mobile.madassignment.util.DataFormat;
+import com.mobile.madassignment.models.UpdateExpenseListEvent;
 
-import java.sql.Date;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -63,6 +60,7 @@ public class MainFragment extends Fragment {
     private static final String TAG = "MainFragment";
     private static final int REQUEST_INVITE = 0;
 
+
     private LinearLayoutManager mLinearLayoutManager;
     private RecyclerView myExpenseRecyclerView;
     private ListView main_lv;
@@ -78,6 +76,7 @@ public class MainFragment extends Fragment {
     private TextView tv_totalSpending;
     private RecyclerView rv_members;
     private LinearLayout ll_invite_button;
+    private TextView tv_expense_date;
 
     private List<Long> expenseKeys;
     private int numOfmembers=1;
@@ -86,6 +85,7 @@ public class MainFragment extends Fragment {
     private FirebaseAuth mAuth;
     private FirebaseUser user;
     private Map<String, String> suerId_nameMap;
+
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -136,14 +136,33 @@ public class MainFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        Log.v(TAG,"event bus start");
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public void onStop() {
+        EventBus.getDefault().unregister(this);
+        super.onStop();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(UpdateExpenseListEvent event) {
+        int number = event.expenseNum;
+        updateExpenseList(number);
+    }
+
+    @Override
     public View onCreateView(final LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v =  inflater.inflate(R.layout.fragment_main, container, false);
 
+
         add_expense = (FloatingActionButton) v.findViewById(R.id.bt_add_expense);
         myExpenseRecyclerView = (RecyclerView) v.findViewById(R.id.expenseRecyclerView);
-        mLinearLayoutManager = new LinearLayoutManager(this.getActivity());
         rv_members = (RecyclerView)v.findViewById(R.id.rv_members);
         rv_balance = (RelativeLayout)v.findViewById(R.id.rv_balance);
         ll_invite_button = (LinearLayout)v.findViewById(R.id.add_user_to_group);
@@ -155,9 +174,6 @@ public class MainFragment extends Fragment {
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
         me = new GroupMember();
-
-        mLinearLayoutManager.setStackFromEnd(false);
-        myExpenseRecyclerView.setLayoutManager(mLinearLayoutManager);
 
         mDatabaseRef  = FirebaseDatabase.getInstance().getReference();
         suerId_nameMap = new HashMap<>();
@@ -189,84 +205,25 @@ public class MainFragment extends Fragment {
             }
         });
 
-        mFirebaseAdapter = new FirebaseRecyclerAdapter<Expense, ExpenseViewHolder>(
-                Expense.class,
-                R.layout.expense_item,
-                ExpenseViewHolder.class,
-                mDatabaseRef.child("expenses").child(group_key)) {
-            @Override
-            protected void populateViewHolder(ExpenseViewHolder viewHolder, Expense expense, int position) {
-                Log.v("expense.type",expense.getType());
-                Log.v("expense.cost",expense.getCost()+"");
-
-                String type = expense.getType();
-                if(expense.getDescription().matches("")||expense.getDescription()==null){
-                    viewHolder.type.setText(type);
-
-                }else {
-                    viewHolder.type.setText(expense.getDescription());
-                }
-                viewHolder.cost.setText(expense.getCost() +" €");
-                if(expense.getPayer().matches(user.getUid())){  //TODO
-                    viewHolder.payer.setText("you payed ");
-                    viewHolder.payer.setTextColor(Color.GREEN);
-                }else {
-
-                    viewHolder.payer.setText( suerId_nameMap.get(expense.getPayer())+ " payed ");
-                    viewHolder.payer.setTextColor(Color.RED);
-                }
-                switch (type){
-                    case "home":
-                        viewHolder.typeImgView.setImageResource(R.mipmap.ic_home);
-                        break;
-                    case "trip":
-                        viewHolder.typeImgView.setImageResource(R.mipmap.ic_bus);
-                        break;
-                    case "shopping" :
-                        viewHolder.typeImgView.setImageResource(R.mipmap.ic_handcart);
-                        break;
-                    case "food":
-                        viewHolder.typeImgView.setImageResource(R.mipmap.ic_bowl);
-                        break;
-                    case "other":
-                        viewHolder.typeImgView.setImageResource(R.mipmap.ic_other);
-                        break;
-                }
-
-                //TODO get userid (userid1 is a default id)
-                if(!expenseKeys.contains(expense.getCreateTime())){
-                    if (expense.getPayer().matches(user.getUid())) {
-                        float temp = me.getPayed() + expense.getCost();
-                        me.setPayed(temp);
-                    }
-                    totalSpending += expense.getCost();
-                    Log.v("payerId", expense.getPayer());
-                    Log.v("me_payed", me.getPayed() + "");
-                    Log.v("me_spending", me.getSpending() + "");
-                    Log.v("totalSpending ", totalSpending + "");
-
-                    float mySpending = totalSpending / numOfmembers;
-                    Log.v("numOfmembers ", numOfmembers + "");
-                    Log.v("mySpending ", mySpending + "");
-                    float mybalance = me.getPayed() - mySpending;
-                    tv_balence_value.setText(DataFormat.myDFloatFormat(mybalance));
-                    if (mybalance < 0) {
-                        Log.v("Mybalance",mybalance+"");
-                        tv_owenORowendText.setText("you owen");
-                        tv_owenORowendText.setBackgroundColor(Color.RED);
+        mDatabaseRef.child("balances").child(group_key).orderByChild("settledUp").equalTo(false)
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for(DataSnapshot data : dataSnapshot.getChildren()) {
+                            Log.d("balance", data.child("settledUp").getValue().toString());
+                            int numOfexpenses =  (int)data.child("expenses").getChildrenCount();
+                            Log.d("balance-num", data.child("expenses").getChildrenCount()+"");
+                            EventBus.getDefault().post(new UpdateExpenseListEvent(numOfexpenses));
+                        }
                     }
 
-                    tv_mySpending.setText(DataFormat.myDFloatFormat(mySpending));
-                    tv_totalSpending.setText(DataFormat.myDFloatFormat(totalSpending));
-                    expenseKeys.add(expense.getCreateTime());
-                }
-
-            }
-        };
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        Toast.makeText(getActivity(),"Internet error",Toast.LENGTH_SHORT).show();
+                    }
+                });
 
 
-        myExpenseRecyclerView.setLayoutManager(mLinearLayoutManager);
-        myExpenseRecyclerView.setAdapter(mFirebaseAdapter);
 
         DatabaseReference groupMembersRef = mDatabaseRef.child("groups").child(group_key).child("members");
 
@@ -345,12 +302,6 @@ public class MainFragment extends Fragment {
 
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
-    }
 
 
     @Override
@@ -382,6 +333,90 @@ public class MainFragment extends Fragment {
     }
     // [END on_activity_result]
 
+    private void updateExpenseList(final int expenseNUm){
+        Log.v(TAG, "get num "+expenseNUm);
+        mFirebaseAdapter = new FirebaseRecyclerAdapter<Expense, ExpenseViewHolder>(
+                Expense.class,
+                R.layout.expense_item,
+                ExpenseViewHolder.class,
+                mDatabaseRef.child("expenses").child(group_key).limitToLast(expenseNUm)) {
+            @Override
+            protected void populateViewHolder(ExpenseViewHolder viewHolder, Expense expense, int position) {
+                Log.v("expense.type",expense.getType());
+                Log.v("expense.cost",expense.getCost()+"");
+
+                String type = expense.getType();
+                if(expense.getDescription().matches("")||expense.getDescription()==null){
+                    viewHolder.type.setText(type);
+
+                }else {
+                    viewHolder.type.setText(expense.getDescription());
+                }
+                viewHolder.cost.setText(expense.getCost() +" €");
+                if(expense.getPayer().matches(user.getUid())){  //TODO
+                    viewHolder.payer.setText("you payed ");
+                    viewHolder.payer.setTextColor(Color.GREEN);
+                }else {
+
+                    viewHolder.payer.setText( suerId_nameMap.get(expense.getPayer())+ " payed ");
+                    viewHolder.payer.setTextColor(Color.RED);
+                }
+                switch (type){
+                    case "home":
+                        viewHolder.typeImgView.setImageResource(R.mipmap.ic_home);
+                        break;
+                    case "trip":
+                        viewHolder.typeImgView.setImageResource(R.mipmap.ic_bus);
+                        break;
+                    case "shopping" :
+                        viewHolder.typeImgView.setImageResource(R.mipmap.ic_handcart);
+                        break;
+                    case "food":
+                        viewHolder.typeImgView.setImageResource(R.mipmap.ic_bowl);
+                        break;
+                    case "other":
+                        viewHolder.typeImgView.setImageResource(R.mipmap.ic_other);
+                        break;
+                }
+                viewHolder.createTime.setText(expense.getFormatDate());
+                //TODO get userid (userid1 is a default id)
+                if(!expenseKeys.contains(expense.getCreateTime())){
+                    if (expense.getPayer().matches(user.getUid())) {
+                        float temp = me.getPayed() + expense.getCost();
+                        me.setPayed(temp);
+                    }
+                    totalSpending += expense.getCost();
+                    Log.v("payerId", expense.getPayer());
+                    Log.v("me_payed", me.getPayed() + "");
+                    Log.v("me_spending", me.getSpending() + "");
+                    Log.v("totalSpending ", totalSpending + "");
+
+                    float mySpending = totalSpending / numOfmembers;
+                    Log.v("numOfmembers ", numOfmembers + "");
+                    Log.v("mySpending ", mySpending + "");
+                    float mybalance = me.getPayed() - mySpending;
+                    tv_balence_value.setText(DataFormat.myDFloatFormat(mybalance));
+                    if (mybalance < 0) {
+                        Log.v("Mybalance",mybalance+"");
+                        tv_owenORowendText.setText("you owen");
+                        tv_owenORowendText.setBackgroundColor(Color.RED);
+                    }
+
+                    tv_mySpending.setText(DataFormat.myDFloatFormat(mySpending));
+                    tv_totalSpending.setText(DataFormat.myDFloatFormat(totalSpending));
+                    expenseKeys.add(expense.getCreateTime());
+                }
+
+            }
+        };
+
+        mLinearLayoutManager = new LinearLayoutManager(this.getActivity());
+        mLinearLayoutManager.setStackFromEnd(true);
+        mLinearLayoutManager.setReverseLayout(true);
+        myExpenseRecyclerView.setLayoutManager(mLinearLayoutManager);
+        myExpenseRecyclerView.setAdapter(mFirebaseAdapter);
+    }
+
     private void showMessage(String msg) {
         ViewGroup container = (ViewGroup) getActivity().findViewById(R.id.snackbar_layout);
         Snackbar.make(container, msg, Snackbar.LENGTH_SHORT).show();
@@ -390,4 +425,6 @@ public class MainFragment extends Fragment {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
+
+
 }

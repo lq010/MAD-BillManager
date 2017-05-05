@@ -45,7 +45,7 @@ public class BalanceListViewAdapter extends RecyclerView.Adapter<BalenceListView
         holder.name.setText(members.get(position).getName());
         GroupMember member =  members.get(position);
 
-        float balance = member.getPayed() - member.getSpending();
+        float balance = member.getBalance();
         holder.cost.setText(df.myDFloatFormat(balance));
         if(balance > 0){
             holder.cost.setTextColor(Color.GREEN);

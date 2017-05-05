@@ -1,8 +1,10 @@
 package com.mobile.madassignment;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.annotation.IntegerRes;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.app.Activity;
 import android.graphics.BitmapFactory;
@@ -71,6 +73,7 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
 
     private int one;
     private ImageView bt_back;
+    private Button bt_settle;
     private RecyclerView rv_balance_list;
     private DatabaseReference mFirebaseRef;
 
@@ -80,7 +83,7 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
     private float total_spending;
     private int total_members;
     private Map<String, GroupMember> memberMap;
-
+    private String newestBalanceKey;
     //chart
     private BarChart barChart;
     private ArrayList<BarEntry> barEntries;
@@ -99,10 +102,12 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
         balanceChart = (TextView)findViewById(R.id.balance_chart);
         scrollbar = (ImageView)findViewById(R.id.scrollbar);
         bt_back =(ImageView) findViewById(R.id.iv_balance_back);
+        bt_settle = (Button) view1.findViewById(R.id.bt_settleUp);
         rv_balance_list = (RecyclerView)view1.findViewById(R.id.rv_balance_list);
 
         barChart = (BarChart)view2.findViewById(R.id.balance_bar);
 
+        bt_settle.setOnClickListener(this);
         bt_back.setOnClickListener(this);
         balanceList.setOnClickListener(this);
         balanceChart.setOnClickListener(this);
@@ -233,6 +238,42 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
         });
         final List<GroupMember> members = new ArrayList<>();
         balanceListViewAdapter = new BalanceListViewAdapter(members,BalanceActivity.this);
+
+        mFirebaseRef.child("balances").child(group_key).orderByChild("settledUp").equalTo(false)
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+//                       Log.d("balances",dataSnapshot.getChildren().toString());
+                        for(DataSnapshot data : dataSnapshot.getChildren()){
+                            Log.d("balances",data.getKey().toString());
+                            newestBalanceKey = data.getKey().toString();
+                            for(DataSnapshot balance : data.child("balance").getChildren()){
+
+                                if(memberMap.containsKey(balance.getKey())){
+                                    Log.v("balanceyyy", balance.getValue().toString());
+                                    memberMap.get(balance.getKey()).setBalance(Float.parseFloat(balance.getValue().toString()));
+                                }else{
+                                    //TODO
+                                }
+                            }
+
+                        }
+                        for(GroupMember member: memberMap.values()){
+//                            member.setSpending(spending);
+                            if(!members.contains(member))
+                                 members.add(member);
+                        }
+
+                        balanceListViewAdapter.notifyDataSetChanged();
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+
+
         mFirebaseRef.child("expenses").child(group_key)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -241,12 +282,6 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
                             Expense expense = data.getValue(Expense.class);
                             total_spending += expense.getCost();
 
-                            if(memberMap.containsKey(expense.getPayer())){
-                                float temp = memberMap.get(expense.getPayer()).getPayed() + expense.getCost();
-                                memberMap.get(expense.getPayer()).setPayed(temp);
-                            }else{
-                                //TODO
-                            }
 
                             //expense per month
                             Calendar calendar = Calendar.getInstance();
@@ -273,16 +308,7 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
 
 
                         }
-                        float spending = total_spending/total_members;
-                        Log.v("totalSpending",total_spending+"");
-                        Log.v("totalMumber",total_members+"");
-                        Log.v("avg ",spending+"");
-                        for(GroupMember member: memberMap.values()){
-                            member.setSpending(spending);
-                            members.add(member);
-                        }
-
-                        balanceListViewAdapter.notifyDataSetChanged();
+//
                     }
 
                     @Override
@@ -331,9 +357,51 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
             case R.id.balance_chart:
                 viewPager.setCurrentItem(1);
                 break;
+            case R.id.bt_settleUp:
+
+                settleThedebt();
+                break;
             case R.id.iv_balance_back:
                BalanceActivity.this.finish();
                 break;
         }
+    }
+
+    private void settleThedebt() {
+        new AlertDialog.Builder(this)
+                .setTitle("Settle the debt")
+                .setMessage("Balance will be reset to 0, are you want settle the debt?")
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        Log.d("settleThedebt", "key "+newestBalanceKey);
+
+                        if(newestBalanceKey!=null && isBalanceNotZero()){
+
+                            mFirebaseRef.child("balances").child(group_key).child(newestBalanceKey).child("settledUp").setValue(true);
+
+                        }else{
+                            Toast.makeText(BalanceActivity.this,"error,please try again latter",Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+
+                })
+                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // do nothing
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
+
+    }
+    private boolean isBalanceNotZero() {
+        for(GroupMember member: memberMap.values()){
+            float balance = member.getBalance();
+            if(balance!=0){
+                return true;
+            }
+        }
+        return false;
     }
 }
