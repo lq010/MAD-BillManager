@@ -1,5 +1,6 @@
 package com.mobile.madassignment;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -7,6 +8,7 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -59,7 +61,7 @@ public class MainFragment extends Fragment {
 
     private static final String TAG = "MainFragment";
     private static final int REQUEST_INVITE = 0;
-
+    private static final int REQUEST_BALANCE =1;
 
     private LinearLayoutManager mLinearLayoutManager;
     private RecyclerView myExpenseRecyclerView;
@@ -77,11 +79,11 @@ public class MainFragment extends Fragment {
     private RecyclerView rv_members;
     private LinearLayout ll_invite_button;
     private TextView tv_expense_date;
-
+    private GroupMember me = new GroupMember();
     private List<Long> expenseKeys;
     private int numOfmembers=1;
     private float totalSpending;
-    private GroupMember me;
+
     private FirebaseAuth mAuth;
     private FirebaseUser user;
     private Map<String, String> suerId_nameMap;
@@ -151,7 +153,12 @@ public class MainFragment extends Fragment {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(UpdateExpenseListEvent event) {
         int number = event.expenseNum;
-        updateExpenseList(number);
+        try {
+            updateExpenseList(number);
+        }catch (IllegalArgumentException e){
+            //if expenseNUm == 0
+            Log.d("query Error",e.getMessage());
+        }
     }
 
     @Override
@@ -173,7 +180,7 @@ public class MainFragment extends Fragment {
         expenseKeys = new ArrayList<>();
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
-        me = new GroupMember();
+
 
         mDatabaseRef  = FirebaseDatabase.getInstance().getReference();
         suerId_nameMap = new HashMap<>();
@@ -214,6 +221,7 @@ public class MainFragment extends Fragment {
                             int numOfexpenses =  (int)data.child("expenses").getChildrenCount();
                             Log.d("balance-num", data.child("expenses").getChildrenCount()+"");
                             EventBus.getDefault().post(new UpdateExpenseListEvent(numOfexpenses));
+
                         }
                     }
 
@@ -277,7 +285,7 @@ public class MainFragment extends Fragment {
                 Bundle bundle = new Bundle();
                 bundle.putString("group_key",group_key);
                 intent.putExtras(bundle);
-                startActivity(intent);
+                startActivityForResult(intent,REQUEST_BALANCE);
             }
         });
 
@@ -297,8 +305,6 @@ public class MainFragment extends Fragment {
 
 
         return v;
-
-
 
     }
 
@@ -322,12 +328,26 @@ public class MainFragment extends Fragment {
                 for (String id : ids) {
 
                     Log.d(TAG, "onActivityResult: sent invitation " + id);
+
                 }
             } else {
                 // Sending failed or it was canceled, show failure message to the user
                 // [START_EXCLUDE]
                 showMessage(getString(R.string.send_failed));
                 // [END_EXCLUDE]
+            }
+        }else if(requestCode == REQUEST_BALANCE){
+            if(resultCode == Activity.RESULT_OK){
+                Log.d("result_activitey","requestCode="+requestCode+", resultCOde= OK");
+                MainFragment currentFragment = this;
+                FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
+                fragTransaction.detach(currentFragment);
+                fragTransaction.attach(currentFragment);
+                fragTransaction.commit();
+
+            }else if(resultCode == Activity.RESULT_CANCELED){
+
+                Log.d("result_activitey","requestCode="+requestCode+", resultCOde= canceled");
             }
         }
     }
@@ -380,6 +400,7 @@ public class MainFragment extends Fragment {
                 }
                 viewHolder.createTime.setText(expense.getFormatDate());
                 //TODO get userid (userid1 is a default id)
+
                 if(!expenseKeys.contains(expense.getCreateTime())){
                     if (expense.getPayer().matches(user.getUid())) {
                         float temp = me.getPayed() + expense.getCost();
@@ -391,10 +412,10 @@ public class MainFragment extends Fragment {
                     Log.v("me_spending", me.getSpending() + "");
                     Log.v("totalSpending ", totalSpending + "");
 
-                    float mySpending = totalSpending / numOfmembers;
+                    float avgSpending = totalSpending / numOfmembers;
                     Log.v("numOfmembers ", numOfmembers + "");
-                    Log.v("mySpending ", mySpending + "");
-                    float mybalance = me.getPayed() - mySpending;
+                    Log.v("mySpending ", avgSpending + "");
+                    float mybalance = me.getPayed() - avgSpending;
                     tv_balence_value.setText(DataFormat.myDFloatFormat(mybalance));
                     if (mybalance < 0) {
                         Log.v("Mybalance",mybalance+"");
@@ -402,7 +423,7 @@ public class MainFragment extends Fragment {
                         tv_owenORowendText.setBackgroundColor(Color.RED);
                     }
 
-                    tv_mySpending.setText(DataFormat.myDFloatFormat(mySpending));
+                    tv_mySpending.setText(DataFormat.myDFloatFormat(avgSpending));
                     tv_totalSpending.setText(DataFormat.myDFloatFormat(totalSpending));
                     expenseKeys.add(expense.getCreateTime());
                 }

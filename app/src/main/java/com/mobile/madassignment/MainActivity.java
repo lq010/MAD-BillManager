@@ -31,6 +31,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.mikepenz.google_material_typeface_library.GoogleMaterial;
 import com.mikepenz.itemanimators.AlphaCrossFadeAnimator;
 import com.mikepenz.materialdrawer.AccountHeader;
@@ -90,7 +91,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     // User is signed in
-
+                    String deviceToken = FirebaseInstanceId.getInstance().getToken();
+                    mRootRef.child("users").child(user.getUid()).child("deviceTokens")
+                            .child(deviceToken).setValue(true);
                     Log.v( "starting fragment", "onAuthStateChanged:signed_in:" + user.getUid());
                     if(!isGroupDrawerInited){
                         initGroupList(user);
@@ -137,9 +140,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 .withOnAccountHeaderListener(new AccountHeader.OnAccountHeaderListener() {
                     @Override
                     public boolean onProfileChanged(View view, IProfile profile, boolean current) {
-                        //sample usage of the onProfileChanged listener
-                        //if the clicked item has the identifier 1 add a new profile ;)
+                   //sign out
                         if (profile instanceof IDrawerItem && profile.getIdentifier() == Logout) {
+                            String deviceToken = FirebaseInstanceId.getInstance().getToken();
+                            mRootRef.child("users").child(mAuth.getCurrentUser().getUid()).child("deviceTokens")
+                                    .child(deviceToken).setValue(false);
                            mAuth.signOut();
                         }
 
@@ -209,7 +214,23 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
             Toast.makeText(this, "Please connect to the Internet",Toast.LENGTH_SHORT ).show();
         }
 
+        //if intent.getExtras != null, get the group key from intent, start fragment
+        if (getIntent().getExtras() != null) {
+            for(String key : getIntent().getExtras().keySet()){
+                if(key.matches("group_key")){
+                    Log.d("notification_groupkey",getIntent().getExtras().get("group_key").toString());
+                    Bundle bundle = new Bundle();
+                    bundle.putString("group_key", getIntent().getExtras().get("group_key").toString());
 
+                    MainFragment mainFragment = new MainFragment();
+                    FragmentManager manager = getSupportFragmentManager();
+
+                    mainFragment.setArguments(bundle);
+                    manager.beginTransaction().replace(R.id.main_content,mainFragment).commit();
+                }
+            }
+
+        }
 
     //firebase invites
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -241,6 +262,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                             }
                         });
     }
+
+
+
 
     private OnCheckedChangeListener onCheckedChangeListener = new OnCheckedChangeListener() {
         @Override

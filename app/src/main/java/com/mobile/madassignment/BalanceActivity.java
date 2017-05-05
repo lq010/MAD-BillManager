@@ -44,6 +44,9 @@ import com.mobile.madassignment.Adapter.ExpenseViewHolder;
 import com.mobile.madassignment.models.Expense;
 import com.mobile.madassignment.models.Group;
 import com.mobile.madassignment.models.GroupMember;
+import com.mobile.madassignment.models.UpdateExpenseListEvent;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.util.ArrayList;
 
@@ -89,6 +92,7 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
     private ArrayList<BarEntry> barEntries;
     private Map<Integer,Map<Integer,Float>> monthlyExpenses;
 
+    private boolean settled =false;//activity result, if true, refresh the mainfragmeng
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -362,6 +366,14 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
                 settleThedebt();
                 break;
             case R.id.iv_balance_back:
+                Intent result = new Intent();
+                result.putExtra("refresh",settled);//
+                if(settled){
+                    setResult(Activity.RESULT_OK,result);
+                }else{
+                    setResult(Activity.RESULT_CANCELED,result);
+                }
+
                BalanceActivity.this.finish();
                 break;
         }
@@ -378,6 +390,8 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
                         if(newestBalanceKey!=null && isBalanceNotZero()){
 
                             mFirebaseRef.child("balances").child(group_key).child(newestBalanceKey).child("settledUp").setValue(true);
+                            //for activity result
+                            settled = true;
 
                         }else{
                             Toast.makeText(BalanceActivity.this,"error,please try again latter",Toast.LENGTH_SHORT).show();
@@ -395,6 +409,7 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
                 .show();
 
     }
+
     private boolean isBalanceNotZero() {
         for(GroupMember member: memberMap.values()){
             float balance = member.getBalance();
