@@ -394,7 +394,7 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
                             settled = true;
 
                         }else{
-                            Toast.makeText(BalanceActivity.this,"error,please try again latter",Toast.LENGTH_SHORT).show();
+                            Toast.makeText(BalanceActivity.this,"Don't need to settle up with others",Toast.LENGTH_SHORT).show();
                         }
                     }
 

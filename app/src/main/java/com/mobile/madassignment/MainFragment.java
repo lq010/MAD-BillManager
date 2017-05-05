@@ -79,15 +79,14 @@ public class MainFragment extends Fragment {
     private RecyclerView rv_members;
     private LinearLayout ll_invite_button;
     private TextView tv_expense_date;
-    private GroupMember me = new GroupMember();
+
     private List<Long> expenseKeys;
     private int numOfmembers=1;
     private float totalSpending;
-
     private FirebaseAuth mAuth;
     private FirebaseUser user;
     private Map<String, String> suerId_nameMap;
-
+    private GroupMember me = new GroupMember();
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -339,11 +338,14 @@ public class MainFragment extends Fragment {
         }else if(requestCode == REQUEST_BALANCE){
             if(resultCode == Activity.RESULT_OK){
                 Log.d("result_activitey","requestCode="+requestCode+", resultCOde= OK");
+                me.reset();
+                totalSpending = 0;
                 MainFragment currentFragment = this;
                 FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
                 fragTransaction.detach(currentFragment);
                 fragTransaction.attach(currentFragment);
                 fragTransaction.commit();
+
 
             }else if(resultCode == Activity.RESULT_CANCELED){
 
@@ -354,6 +356,7 @@ public class MainFragment extends Fragment {
     // [END on_activity_result]
 
     private void updateExpenseList(final int expenseNUm){
+
         Log.v(TAG, "get num "+expenseNUm);
         mFirebaseAdapter = new FirebaseRecyclerAdapter<Expense, ExpenseViewHolder>(
                 Expense.class,

@@ -16,6 +16,9 @@ public class GroupMember {
 
 
     public GroupMember() {
+        this.spending = 0;
+        this.payed = 0;
+        this.balance = 0;
     }
 
 
@@ -50,4 +53,11 @@ public class GroupMember {
     public void setBalance(float balance) {
         this.balance = balance;
     }
+
+    public void reset(){
+        this.spending = 0;
+        this.payed = 0;
+        this.balance = 0;
+    }
+
 }
