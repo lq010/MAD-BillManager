@@ -32,6 +32,8 @@ import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -386,10 +388,15 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         Log.d("settleThedebt", "key "+newestBalanceKey);
-
+                        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                        if(user==null){
+                            Toast.makeText(BalanceActivity.this,"please login",Toast.LENGTH_SHORT).show();
+                            return;
+                        }
                         if(newestBalanceKey!=null && isBalanceNotZero()){
 
                             mFirebaseRef.child("balances").child(group_key).child(newestBalanceKey).child("settledUp").setValue(true);
+                            mFirebaseRef.child("balances").child(group_key).child(newestBalanceKey).child("settledBy").setValue(user.getUid());
                             //for activity result
                             settled = true;
 
