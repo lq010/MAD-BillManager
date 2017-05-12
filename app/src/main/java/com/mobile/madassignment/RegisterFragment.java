@@ -129,6 +129,13 @@ public class RegisterFragment extends Fragment implements View.OnClickListener{
         View focusView = null;
 
         // Check for a valid password, if the user entered one.
+
+        if (TextUtils.isEmpty(password)) {
+            mPasswordView.setError(getString(R.string.error_invalid_password));
+            focusView = mPasswordView;
+            cancel = true;
+        }
+
         if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
             mPasswordView.setError(getString(R.string.error_invalid_password));
             focusView = mPasswordView;
