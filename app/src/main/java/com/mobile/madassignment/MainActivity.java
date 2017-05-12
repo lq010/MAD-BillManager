@@ -2,6 +2,7 @@ package com.mobile.madassignment;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -23,6 +24,8 @@ import com.google.android.gms.appinvite.AppInviteReferral;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -32,6 +35,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.mikepenz.google_material_typeface_library.GoogleMaterial;
 import com.mikepenz.itemanimators.AlphaCrossFadeAnimator;
 import com.mikepenz.materialdrawer.AccountHeader;
@@ -46,8 +52,11 @@ import com.mikepenz.materialdrawer.model.ProfileSettingDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 import com.mikepenz.materialdrawer.model.interfaces.Nameable;
+import com.squareup.picasso.Picasso;
 
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -327,11 +336,34 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     }
 
 //get groups
-    private void initGroupList(FirebaseUser user){
-        IProfile profile = new ProfileDrawerItem().withName(user.getDisplayName()).withEmail(user.getEmail())
-                .withIcon(R.drawable.profile).withIdentifier(PROFILE_SETTING);
-        headerResult.updateProfile(profile);
+    private void initGroupList(final FirebaseUser user){
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storageRef = storage.getReferenceFromUrl("gs://madassignment-1f6c6.appspot.com");
+        StorageReference photoRef = storageRef.child(user.getUid()+".jpg");
 
+        try {
+            final File localFile = File.createTempFile("images", "jpg");
+            final long ONE_MEGABYTE = 1024*1024;
+            photoRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                    // Local temp file has been created
+                    IProfile profile = new ProfileDrawerItem().withName(user.getDisplayName()).withEmail(user.getEmail())
+                            .withIcon(BitmapFactory.decodeFile(localFile.getPath())).withIdentifier(PROFILE_SETTING);
+                    headerResult.updateProfile(profile);
+                    //Toast.makeText(UserProfileActivity.this, "photo download success",Toast.LENGTH_SHORT ).show();
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception exception) {
+                    // Handle any errors
+                    //Toast.makeText(UserProfileActivity.this, "photo download failed",Toast.LENGTH_SHORT ).show();
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
         final DatabaseReference groups = mRootRef.child("groups");
         DatabaseReference user_groups = mRootRef.child("users").child(user.getUid()).child("groups");
 
