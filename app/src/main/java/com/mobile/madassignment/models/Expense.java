@@ -1,5 +1,7 @@
 package com.mobile.madassignment.models;
 
+import com.google.firebase.database.Exclude;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -57,6 +59,7 @@ public class Expense {
         return createTime;
     }
 
+    @Exclude
     public  String getFormatDate(){
         Date date = new Date(createTime);
         SimpleDateFormat df = new SimpleDateFormat("HH:mm dd-MMM-yyyy");

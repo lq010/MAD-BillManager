@@ -25,7 +25,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.iid.FirebaseInstanceId;
+import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -48,14 +48,13 @@ public class UserProfileActivity extends Activity {
 
     private FirebaseAuth mAuth;
     private FirebaseUser user;
-    private DatabaseReference mRootRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_profile);
 
-        mRootRef = FirebaseDatabase.getInstance().getReference();
+        //mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
 
@@ -148,12 +147,7 @@ public class UserProfileActivity extends Activity {
                 boolean cancel = false;
                 String passwordStr = password.getText().toString();
                 String repeatStr = repeatPW.getText().toString();
-                if (TextUtils.isEmpty(passwordStr)) {
-                    password.setError(getString(R.string.error_invalid_password));
-                    focusView = password;
-                    cancel = true;
-                }
-                if (!TextUtils.isEmpty(passwordStr) && !isPasswordValid(passwordStr)) {
+                if (TextUtils.isEmpty(passwordStr) && !isPasswordValid(passwordStr)) {
                     password.setError(getString(R.string.error_invalid_password));
                     focusView = password;
                     cancel = true;
@@ -178,9 +172,6 @@ public class UserProfileActivity extends Activity {
                                     }
                                     else {
                                         Toast.makeText(UserProfileActivity.this, "For sicurity, You need to log in first.",Toast.LENGTH_SHORT ).show();
-                                        String deviceToken = FirebaseInstanceId.getInstance().getToken();
-                                        mRootRef.child("users").child(mAuth.getCurrentUser().getUid()).child("deviceTokens")
-                                                .child(deviceToken).setValue(false);
                                         mAuth.signOut();
                                     }
                                 }
