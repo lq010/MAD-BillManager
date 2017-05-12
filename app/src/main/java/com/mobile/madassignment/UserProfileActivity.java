@@ -72,6 +72,8 @@ public class UserProfileActivity extends Activity {
     private static final String PHOTO_FILE_NAME = "temp_photo.jpg";
     private File tempFile;
 
+    private boolean picture_choosed = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -82,7 +84,7 @@ public class UserProfileActivity extends Activity {
         user = mAuth.getCurrentUser();
 
         gallery = (Button)findViewById(R.id.photo_from_gallery);
-        camera = (Button)findViewById(R.id.photo_from_camera);
+        //camera = (Button)findViewById(R.id.photo_from_camera);
         update_picture = (Button)findViewById(R.id.bt_update_picture);
         update_profile = (Button)findViewById(R.id.bt_update_profile);
         back = (ImageView)findViewById(R.id.iv_user_profile_back);
@@ -117,13 +119,13 @@ public class UserProfileActivity extends Activity {
                 public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                     // Local temp file has been created
                     Picasso.with(UserProfileActivity.this).load(localFile).into(picture);
-                    Toast.makeText(UserProfileActivity.this, "photo download success",Toast.LENGTH_SHORT ).show();
+                    //Toast.makeText(UserProfileActivity.this, "photo download success",Toast.LENGTH_SHORT ).show();
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception exception) {
                     // Handle any errors
-                    Toast.makeText(UserProfileActivity.this, "photo download failed",Toast.LENGTH_SHORT ).show();
+                    //Toast.makeText(UserProfileActivity.this, "photo download failed",Toast.LENGTH_SHORT ).show();
                 }
             });
         } catch (IOException e) {
@@ -140,12 +142,12 @@ public class UserProfileActivity extends Activity {
                 on_gallery_click();
             }
         });
-        camera.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                on_camera_click();
-            }
-        });
+//        camera.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                on_camera_click();
+//            }
+//        });
 
         update_profile.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -178,29 +180,34 @@ public class UserProfileActivity extends Activity {
         update_picture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                picture.setDrawingCacheEnabled(true);
-                picture.buildDrawingCache();
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                tempPic.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-                byte[] data = baos.toByteArray();
+                if(picture_choosed) {
+                    picture.setDrawingCacheEnabled(true);
+                    picture.buildDrawingCache();
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    tempPic.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                    byte[] data = baos.toByteArray();
 
-                FirebaseStorage storage = FirebaseStorage.getInstance();
-                StorageReference storageRef = storage.getReferenceFromUrl("gs://madassignment-1f6c6.appspot.com");
-                StorageReference photoRef = storageRef.child(user.getUid()+".jpg");
-                UploadTask uploadTask = photoRef.putBytes(data);
-                uploadTask.addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception exception) {
-                        Toast.makeText(UserProfileActivity.this, "Photo update failed.",Toast.LENGTH_SHORT ).show();
-                    }
-                }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-                        Toast.makeText(UserProfileActivity.this, "Photo update success.",Toast.LENGTH_SHORT ).show();
-                        //Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                    }
-                });
+                    FirebaseStorage storage = FirebaseStorage.getInstance();
+                    StorageReference storageRef = storage.getReferenceFromUrl("gs://madassignment-1f6c6.appspot.com");
+                    StorageReference photoRef = storageRef.child(user.getUid() + ".jpg");
+                    UploadTask uploadTask = photoRef.putBytes(data);
+                    uploadTask.addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception exception) {
+                            Toast.makeText(UserProfileActivity.this, "Photo update failed.", Toast.LENGTH_SHORT).show();
+                        }
+                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                            // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+                            Toast.makeText(UserProfileActivity.this, "Photo update success.", Toast.LENGTH_SHORT).show();
+                            //Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                        }
+                    });
+                }
+                else {
+                    Toast.makeText(UserProfileActivity.this, "Please choose a new photo before upload.", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -303,6 +310,7 @@ public class UserProfileActivity extends Activity {
             if (data != null) {
                 tempPic = data.getParcelableExtra("data");
                 picture.setImageBitmap(tempPic);
+                picture_choosed = true;
             }
             try {
                 tempFile.delete();

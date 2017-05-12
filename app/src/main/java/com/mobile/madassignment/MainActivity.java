@@ -363,7 +363,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         } catch (IOException e) {
             e.printStackTrace();
         }
-        
+
         final DatabaseReference groups = mRootRef.child("groups");
         DatabaseReference user_groups = mRootRef.child("users").child(user.getUid()).child("groups");
 
