@@ -53,7 +53,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener{
 
-    private static final int PROFILE_SETTING = 100000;
+    private static final int PROFILE_SETTING = 105;
     private static final int Logout = 1000001;
     //save our header or result
     private AccountHeader headerResult = null;
@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         setContentView(R.layout.activity_main);
 
         final IProfile defaultprofile = new ProfileDrawerItem().withName("Batman").withEmail("batman@gmail.com")
-                .withIcon(R.drawable.profile).withIdentifier(105);
+                .withIcon(R.drawable.profile).withIdentifier(PROFILE_SETTING);
 
         mAuth = FirebaseAuth.getInstance();
 
@@ -147,6 +147,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                                     .child(deviceToken).setValue(false);
                            mAuth.signOut();
                         }
+                        if (profile instanceof IDrawerItem && profile.getIdentifier() == PROFILE_SETTING) {
+                            //Toast.makeText(MainActivity.this, "click on profile setting", Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(MainActivity.this,UserProfileActivity.class);
+                            startActivity(intent);
+                        }
 
                         //false if you have not consumed the event and it should close the drawer
                         return false;
@@ -179,7 +184,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
                         if (drawerItem != null) {
                             long id = drawerItem.getIdentifier();
-                            String group_key= menuId_group.get(id);
+                            String group_key = menuId_group.get(id);
                             Log.v("starting fragment", "item id:"+id +" group_key:"+ group_key);
                             // Toast.makeText(MainActivity.this, id + group_key, Toast.LENGTH_SHORT).show();
                             Bundle bundle = new Bundle();
@@ -324,7 +329,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 //get groups
     private void initGroupList(FirebaseUser user){
         IProfile profile = new ProfileDrawerItem().withName(user.getDisplayName()).withEmail(user.getEmail())
-                .withIcon(R.drawable.profile).withIdentifier(105);
+                .withIcon(R.drawable.profile).withIdentifier(PROFILE_SETTING);
         headerResult.updateProfile(profile);
 
         final DatabaseReference groups = mRootRef.child("groups");
