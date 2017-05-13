@@ -104,7 +104,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                     mRootRef.child("users").child(user.getUid()).child("deviceTokens")
                             .child(deviceToken).setValue(true);
                     Log.v( "starting fragment", "onAuthStateChanged:signed_in:" + user.getUid());
+
                     if(!isGroupDrawerInited){
+                        if(!result.isDrawerOpen())
+                            result.openDrawer();
                         initGroupList(user);
                     }
 
@@ -152,9 +155,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                    //sign out
                         if (profile instanceof IDrawerItem && profile.getIdentifier() == Logout) {
                             String deviceToken = FirebaseInstanceId.getInstance().getToken();
-                            mRootRef.child("users").child(mAuth.getCurrentUser().getUid()).child("deviceTokens")
-                                    .child(deviceToken).setValue(false);
-                           mAuth.signOut();
+                            if(mAuth.getCurrentUser()!=null) {
+                                mRootRef.child("users").child(mAuth.getCurrentUser().getUid()).child("deviceTokens")
+                                        .child(deviceToken).setValue(false);
+                                mAuth.signOut();
+                            }
                         }
                         if (profile instanceof IDrawerItem && profile.getIdentifier() == PROFILE_SETTING) {
                             //Toast.makeText(MainActivity.this, "click on profile setting", Toast.LENGTH_SHORT).show();
@@ -341,6 +346,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         StorageReference storageRef = storage.getReferenceFromUrl("gs://madassignment-1f6c6.appspot.com");
         StorageReference photoRef = storageRef.child(user.getUid()+".jpg");
 
+        final IProfile profile = new ProfileDrawerItem().withName(user.getDisplayName()).withEmail(user.getEmail())
+                .withIcon(R.drawable.profile).withIdentifier(PROFILE_SETTING);
+        headerResult.updateProfile(profile);
         try {
             final File localFile = File.createTempFile("images", "jpg");
             final long ONE_MEGABYTE = 1024*1024;
@@ -348,8 +356,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 @Override
                 public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                     // Local temp file has been created
-                    IProfile profile = new ProfileDrawerItem().withName(user.getDisplayName()).withEmail(user.getEmail())
-                            .withIcon(BitmapFactory.decodeFile(localFile.getPath())).withIdentifier(PROFILE_SETTING);
+                    profile.withIcon(BitmapFactory.decodeFile(localFile.getPath()));
                     headerResult.updateProfile(profile);
                     //Toast.makeText(UserProfileActivity.this, "photo download success",Toast.LENGTH_SHORT ).show();
                 }
@@ -361,7 +368,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 }
             });
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.d("MainActivity",e.getMessage());
         }
 
         final DatabaseReference groups = mRootRef.child("groups");

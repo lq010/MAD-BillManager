@@ -226,7 +226,8 @@ public class MainFragment extends Fragment {
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-                        Toast.makeText(getActivity(),"Internet error",Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "firebase Error(balances/{groupId}/settledUp"+databaseError.getMessage());
+                        //Toast.makeText(getActivity(),"Internet error",Toast.LENGTH_SHORT).show();
                     }
                 });
 

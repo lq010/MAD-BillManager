@@ -60,7 +60,7 @@
     <string name="invitation_custom_image">https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png</string>
     <string name="invitation_cta">Install!</string>
     <string name="invite_dialog_title">You got an invitation!</string>
-    <string name="send_failed">Sending invitations failed</string>
+    <string name="send_failed">Sending invitations failed(debug version, a SHA-1 is required</string>
 
     <string name="invitation_msg_fmt" formatted="false">You are invite to group \n %s</string>
 

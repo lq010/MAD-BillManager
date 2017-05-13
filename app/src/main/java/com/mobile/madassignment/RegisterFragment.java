@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -47,7 +48,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener{
     private EditText mUserNameView;
     private View mProgressView;
     private View mLoginFormView;
-
+    private RegisterFragment currentFragment;
     private OnFragmentInteractionListener mListener;
 
     public RegisterFragment() {
@@ -81,6 +82,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener{
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        currentFragment = this;
         // Inflate the layout for this fragment
         View v =  inflater.inflate(R.layout.fragment_register, container, false);
         mAuth = ((MainActivity)getActivity()).getmAuth();
@@ -203,6 +205,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener{
                                 DatabaseReference database = FirebaseDatabase.getInstance().getReference();
                                 database.child("users").child(UID).child("email").setValue(emailAddress);
                                 database.child("users").child(UID).child("name").setValue(userName);
+                                getActivity().getSupportFragmentManager().beginTransaction().remove(currentFragment).commit();
                             }
                         }
                     });
