@@ -48,20 +48,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link MainFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link MainFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class MainFragment extends Fragment {
 
     private static final String TAG = "MainFragment";
     private static final int REQUEST_INVITE = 0;
     private static final int REQUEST_BALANCE =1;
+
 
     private LinearLayoutManager mLinearLayoutManager;
     private RecyclerView myExpenseRecyclerView;
@@ -88,35 +80,10 @@ public class MainFragment extends Fragment {
     private Map<String, String> suerId_nameMap;
     private GroupMember me = new GroupMember();
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    private OnFragmentInteractionListener mListener;
-
-    public MainFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment MainFragment.
-     */
-    // TODO: Rename and change types and number of parameters
     public static MainFragment newInstance(String param1, String param2) {
         MainFragment fragment = new MainFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
+
         fragment.setArguments(args);
         return fragment;
     }
@@ -124,10 +91,7 @@ public class MainFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
+
         Bundle bundle = this.getArguments();
         if(bundle!= null){
             group_key = bundle.getString("group_key");
@@ -151,9 +115,9 @@ public class MainFragment extends Fragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(UpdateExpenseListEvent event) {
-        int number = event.expenseNum;
+        String balanceId = event.balanceId;
         try {
-            updateExpenseList(number);
+            updateExpenseList(balanceId);
         }catch (IllegalArgumentException e){
             //if expenseNUm == 0
             Log.d("query Error",e.getMessage());
@@ -212,15 +176,17 @@ public class MainFragment extends Fragment {
         });
 
         mDatabaseRef.child("balances").child(group_key).orderByChild("settledUp").equalTo(false)
-                .addValueEventListener(new ValueEventListener() {
+                .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+
                         for(DataSnapshot data : dataSnapshot.getChildren()) {
                             Log.d("balance", data.child("settledUp").getValue().toString());
                             int numOfexpenses =  (int)data.child("expenses").getChildrenCount();
                             Log.d("balance-num", data.child("expenses").getChildrenCount()+"");
-                            EventBus.getDefault().post(new UpdateExpenseListEvent(numOfexpenses));
-
+                            Log.d("balance-id", data.getKey());
+                            String balanceId = data.getKey();
+                            EventBus.getDefault().post(new UpdateExpenseListEvent(balanceId));
                         }
                     }
 
@@ -313,7 +279,7 @@ public class MainFragment extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
-        mListener = null;
+//        mListener = null;
     }
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -356,14 +322,14 @@ public class MainFragment extends Fragment {
     }
     // [END on_activity_result]
 
-    private void updateExpenseList(final int expenseNUm){
+    private void updateExpenseList(final String balanceId){
 
-        Log.v(TAG, "get num "+expenseNUm);
+        Log.v(TAG, "balanceid "+balanceId);
         mFirebaseAdapter = new FirebaseRecyclerAdapter<Expense, ExpenseViewHolder>(
                 Expense.class,
                 R.layout.expense_item,
                 ExpenseViewHolder.class,
-                mDatabaseRef.child("expenses").child(group_key).limitToLast(expenseNUm)) {
+                mDatabaseRef.child("expenses").child(group_key).orderByKey().startAt(balanceId)) {
             @Override
             protected void populateViewHolder(ExpenseViewHolder viewHolder, Expense expense, int position) {
                 Log.v("expense.type",expense.getType());
@@ -445,10 +411,6 @@ public class MainFragment extends Fragment {
     private void showMessage(String msg) {
         ViewGroup container = (ViewGroup) getActivity().findViewById(R.id.snackbar_layout);
         Snackbar.make(container, msg, Snackbar.LENGTH_SHORT).show();
-    }
-    public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onFragmentInteraction(Uri uri);
     }
 
 
