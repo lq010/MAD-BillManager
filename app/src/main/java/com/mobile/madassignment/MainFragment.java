@@ -145,6 +145,27 @@ public class MainFragment extends Fragment {
         user = mAuth.getCurrentUser();
 
 
+        //MODIFY EXPENSE
+        myExpenseRecyclerView.addOnItemTouchListener(
+                new RecyclerItemClickListener(this.getContext(), myExpenseRecyclerView ,new RecyclerItemClickListener.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(View view, int position) {
+                        Bundle bundle = new Bundle();
+                        bundle.putString("group_key",group_key);
+                        Intent i= new Intent( getActivity(),ModifyExpenseActivity.class );
+                        i.putExtras(bundle);
+                        i.putExtra("cost","0.00 EUR");
+                        startActivity(i);
+
+                    }
+
+                    @Override public void onLongItemClick(View view, int position) {
+
+                        Toast.makeText( getContext(),"Deleted",Toast.LENGTH_LONG).show();
+                    }
+                })
+        );
+
         mDatabaseRef  = FirebaseDatabase.getInstance().getReference();
         suerId_nameMap = new HashMap<>();
         mDatabaseRef.child("groups").child(group_key).child("members").addChildEventListener(new ChildEventListener() {
