@@ -1,6 +1,7 @@
 package com.mobile.madassignment;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -9,6 +10,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -149,19 +151,48 @@ public class MainFragment extends Fragment {
         myExpenseRecyclerView.addOnItemTouchListener(
                 new RecyclerItemClickListener(this.getContext(), myExpenseRecyclerView ,new RecyclerItemClickListener.OnItemClickListener() {
                     @Override
-                    public void onItemClick(View view, int position) {
+                    public void onItemClick(View view, final int position) {
                         Bundle bundle = new Bundle();
                         bundle.putString("group_key",group_key);
+                        bundle.putString("expense_key",mFirebaseAdapter.getRef(position).getKey());
+                       // String expense_key = mDatabaseRef.child("expenses").child(group_key).push().getKey();
+
+                        ;
+                        //Toast.makeText(getContext(),"expense key :"+mFirebaseAdapter.getRef(position).getKey(),Toast.LENGTH_LONG).show();
+                       // bundle.putString("expense_key",mDatabaseRef.push().getKey());
                         Intent i= new Intent( getActivity(),ModifyExpenseActivity.class );
                         i.putExtras(bundle);
-                        i.putExtra("cost","0.00 EUR");
+                        i.putExtra("cost","");
                         startActivity(i);
 
                     }
 
                     @Override public void onLongItemClick(View view, int position) {
 
-                        Toast.makeText( getContext(),"Deleted",Toast.LENGTH_LONG).show();
+                        final String exp_key = mFirebaseAdapter.getRef(position).getKey();
+
+                        final AlertDialog.Builder alert= new AlertDialog.Builder(getActivity());
+                        alert.setTitle("Confirm Delete");
+                        alert.setMessage("Are you sure you want to delete expense?");
+                        alert.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                mDatabaseRef.child("expenses").child(group_key).child(exp_key).removeValue(new DatabaseReference.CompletionListener() {
+                                    @Override
+                                    public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                        Toast.makeText( getContext(),"Expense Deleted",Toast.LENGTH_LONG).show();
+                                    }
+                                });
+                            }
+                        });
+                        alert.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.dismiss();
+                            }
+                        });
+                        alert.show();
+
                     }
                 })
         );
@@ -363,6 +394,7 @@ public class MainFragment extends Fragment {
                 }else {
                     viewHolder.type.setText(expense.getDescription());
                 }
+
                 viewHolder.cost.setText(expense.getCost() +" €");
                 if(expense.getPayer().matches(user.getUid())){  //TODO
                     viewHolder.payer.setText("you payed ");
