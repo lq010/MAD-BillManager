@@ -81,7 +81,7 @@ public class MainFragment extends Fragment {
     private FirebaseUser user;
     private Map<String, String> suerId_nameMap;
     private GroupMember me = new GroupMember();
-
+   // public String cost;
     public static MainFragment newInstance(String param1, String param2) {
         MainFragment fragment = new MainFragment();
         Bundle args = new Bundle();
@@ -152,18 +152,34 @@ public class MainFragment extends Fragment {
                 new RecyclerItemClickListener(this.getContext(), myExpenseRecyclerView ,new RecyclerItemClickListener.OnItemClickListener() {
                     @Override
                     public void onItemClick(View view, final int position) {
-                        Bundle bundle = new Bundle();
+                        final Bundle bundle = new Bundle();
                         bundle.putString("group_key",group_key);
                         bundle.putString("expense_key",mFirebaseAdapter.getRef(position).getKey());
-                       // String expense_key = mDatabaseRef.child("expenses").child(group_key).push().getKey();
 
-                        ;
-                        //Toast.makeText(getContext(),"expense key :"+mFirebaseAdapter.getRef(position).getKey(),Toast.LENGTH_LONG).show();
-                       // bundle.putString("expense_key",mDatabaseRef.push().getKey());
-                        Intent i= new Intent( getActivity(),ModifyExpenseActivity.class );
-                        i.putExtras(bundle);
-                        i.putExtra("cost","");
-                        startActivity(i);
+                        mDatabaseRef.child("expenses").child(group_key).child(mFirebaseAdapter.getRef(position).getKey())
+                                .addValueEventListener(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(DataSnapshot dataSnapshot) {
+                                        Expense ex= dataSnapshot.getValue(Expense.class);
+
+                                       final String cost= String.valueOf(ex.getCost());
+                                        bundle.putString("cost",cost);
+
+                                        Intent i= new Intent( getActivity(),ModifyExpenseActivity.class );
+                                        i.putExtras(bundle);
+
+                                        String coste=i.getExtras().getString("cost");
+                                        i.putExtras(bundle);
+                                        startActivity(i);
+                                    }
+
+                                    @Override
+                                    public void onCancelled(DatabaseError databaseError) {
+
+                                    }
+                                }
+                        );
+
 
                     }
 
@@ -173,7 +189,7 @@ public class MainFragment extends Fragment {
 
                         final AlertDialog.Builder alert= new AlertDialog.Builder(getActivity());
                         alert.setTitle("Confirm Delete");
-                        alert.setMessage("Are you sure you want to delete expense?");
+                        alert.setMessage("Are you sure you want to delete this expense?");
                         alert.setPositiveButton("YES", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
