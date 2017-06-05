@@ -12,7 +12,7 @@ public class GroupMember {
     private float spending;
     private float payed;
     private float balance;
-
+    private  String photoFile;
 
 
     public GroupMember() {
@@ -47,7 +47,7 @@ public class GroupMember {
     }
 
     public float getBalance() {
-        return balance;
+        return this.balance;
     }
 
     public void setBalance(float balance) {
@@ -58,6 +58,21 @@ public class GroupMember {
         this.spending = 0;
         this.payed = 0;
         this.balance = 0;
+    }
+
+    public String getPhotoFile() {
+        return photoFile;
+    }
+
+    public void setPhotoFile(String photoURL) {
+        this.photoFile = photoURL;
+    }
+
+    public boolean isPhotoExist(){
+        if(photoFile!=null)
+            return true;
+        else
+            return  false;
     }
 
 }

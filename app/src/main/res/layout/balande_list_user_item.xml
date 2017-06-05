@@ -11,14 +11,16 @@
         android:layout_centerVertical="true"
         android:src="@drawable/j01" />
 
-    <com.mikepenz.materialdrawer.view.BezelImageView
+    <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/iv_balance_userPhoto"
         android:layout_width="41dp"
         android:layout_height="41dp"
         android:layout_centerVertical="true"
         android:layout_marginLeft="10dp"
         android:layout_toRightOf="@+id/iv_item_item_left"
+        android:src="@drawable/profile"
         android:padding="5dp"
+
         android:elevation="1dp" />
 
     <TextView

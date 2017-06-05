@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
+import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
@@ -18,16 +20,23 @@ import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.Toast;
 
+import com.firebase.ui.auth.ErrorCodes;
+import com.firebase.ui.auth.ResultCodes;
 import com.google.android.gms.appinvite.AppInvite;
 import com.google.android.gms.appinvite.AppInviteInvitationResult;
 import com.google.android.gms.appinvite.AppInviteReferral;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.firebase.ui.auth.AuthUI;
+import com.firebase.ui.auth.IdpResponse;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -57,6 +66,7 @@ import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -64,6 +74,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     private static final int PROFILE_SETTING = 105;
     private static final int Logout = 1000001;
+    private static final int UPDATE_PROFILE = 10001;
+    private static final int RC_SIGN_IN = 11000;
     //save our header or result
     private AccountHeader headerResult = null;
     private Drawer result = null;
@@ -78,12 +90,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     private boolean AuthState = false;
     private String userName = "login/register";
     private String userAddress = "XXX@XXXXX.XX";
+    private Toolbar toolbar;
     //private Uri photoUrl;
     //private String UID = "";
 
     private GoogleApiClient mGoogleApiClient;
 
     private boolean isGroupDrawerInited = false;
+
+    public Toolbar getToolbar() {
+        return toolbar;
+    }
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -106,8 +126,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                     Log.v( "starting fragment", "onAuthStateChanged:signed_in:" + user.getUid());
 
                     if(!isGroupDrawerInited){
-                        if(!result.isDrawerOpen())
-                            result.openDrawer();
+
                         initGroupList(user);
                     }
 
@@ -118,20 +137,26 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                     result.removeAllItems();
                     menuId_group.clear();
                     isGroupDrawerInited =false;
-                    LoginFragment loginFragment = new LoginFragment();
-                    FragmentManager manager = getSupportFragmentManager();
-                    manager.beginTransaction().replace(R.id.main_content,loginFragment).commit();
 
+                    startActivityForResult(
+                            AuthUI.getInstance()
+                                    .createSignInIntentBuilder()
+                                    .setProviders(Arrays.asList(new AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build(),
+                                            new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build()))
+                                    .build(),
+                            RC_SIGN_IN);
 
                 }
                 // ...
+
             }
         };
 
 
 
         menuId_group = new ConcurrentHashMap<>();
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+
         setSupportActionBar(toolbar);
 
 
@@ -158,13 +183,24 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                             if(mAuth.getCurrentUser()!=null) {
                                 mRootRef.child("users").child(mAuth.getCurrentUser().getUid()).child("deviceTokens")
                                         .child(deviceToken).setValue(false);
-                                mAuth.signOut();
+                                AuthUI.getInstance()
+                                        .signOut(MainActivity.this)
+                                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                            public void onComplete(@NonNull Task<Void> task) {
+                                                // user is now signed out
+                                                showSnackbar("signed out");
+                                            }
+                                        });
+
                             }
                         }
                         if (profile instanceof IDrawerItem && profile.getIdentifier() == PROFILE_SETTING) {
                             //Toast.makeText(MainActivity.this, "click on profile setting", Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(MainActivity.this,UserProfileActivity.class);
-                            startActivity(intent);
+                            if(mAuth.getCurrentUser()!=null){
+                                Intent intent = new Intent(MainActivity.this,UserProfileActivity.class);
+                                startActivityForResult(intent, UPDATE_PROFILE);
+                            }
+
                         }
 
                         //false if you have not consumed the event and it should close the drawer
@@ -172,6 +208,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                     }
                 })
                 .build();
+
 
         //drawer items
         result = new DrawerBuilder()
@@ -209,6 +246,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
                             mainFragment.setArguments(bundle);
                             manager.beginTransaction().replace(R.id.main_content,mainFragment).commit();
+
                         }
                         return false;
 
@@ -241,11 +279,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                     Bundle bundle = new Bundle();
                     bundle.putString("group_key", getIntent().getExtras().get("group_key").toString());
 
+                    result.closeDrawer();
                     MainFragment mainFragment = new MainFragment();
                     FragmentManager manager = getSupportFragmentManager();
 
                     mainFragment.setArguments(bundle);
                     manager.beginTransaction().replace(R.id.main_content,mainFragment).commit();
+
                 }
             }
 
@@ -280,6 +320,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                                 }
                             }
                         });
+
+
     }
 
 
@@ -356,6 +398,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 @Override
                 public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                     // Local temp file has been created
+
                     profile.withIcon(BitmapFactory.decodeFile(localFile.getPath()));
                     headerResult.updateProfile(profile);
                     //Toast.makeText(UserProfileActivity.this, "photo download success",Toast.LENGTH_SHORT ).show();
@@ -429,7 +472,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
             @Override
             public void onChildRemoved(DataSnapshot dataSnapshot) {
-
+                final String groupKey = dataSnapshot.getKey();
+                for (long itemId: menuId_group.keySet()){
+                    if(groupKey.matches(menuId_group.get(itemId))){
+                        result.removeItem(itemId);
+                    }
+                }
             }
 
             @Override
@@ -452,9 +500,97 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+            super.onActivityResult(requestCode, resultCode, data);
+
+            if (requestCode == RC_SIGN_IN) {
+                if (resultCode == RESULT_OK) {
+
+                    handleSignInResponse(resultCode, data);
+                    return;
+                } else if (resultCode == RESULT_CANCELED) {
+                    Toast.makeText(this, "Sign in canceled", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            }else if (requestCode == UPDATE_PROFILE  && resultCode  == RESULT_OK) {
+                FirebaseStorage storage = FirebaseStorage.getInstance();
+                StorageReference storageRef = storage.getReferenceFromUrl("gs://madassignment-1f6c6.appspot.com");
+                StorageReference photoRef = storageRef.child(mAuth.getCurrentUser().getUid()+".jpg");
+
+                final IProfile profile = new ProfileDrawerItem().withName(mAuth.getCurrentUser().getDisplayName()).withEmail(mAuth.getCurrentUser().getEmail())
+                        .withIcon(R.drawable.profile).withIdentifier(PROFILE_SETTING);
+                headerResult.updateProfile(profile);
+                try {
+                    final File localFile = File.createTempFile("images", "jpg");
+                    final long ONE_MEGABYTE = 1024*1024;
+                    photoRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                            // Local temp file has been created
+
+                            profile.withIcon(BitmapFactory.decodeFile(localFile.getPath()));
+                            headerResult.updateProfile(profile);
+                            //Toast.makeText(UserProfileActivity.this, "photo download success",Toast.LENGTH_SHORT ).show();
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception exception) {
+                            // Handle any errors
+                            //Toast.makeText(UserProfileActivity.this, "photo download failed",Toast.LENGTH_SHORT ).show();
+                        }
+                    });
+                } catch (IOException e) {
+                    Log.d("MainActivity",e.getMessage());
+                }
+
+            }
+
+
+    }
+
+    @MainThread
+    private void handleSignInResponse(int resultCode, Intent data) {
+        IdpResponse response = IdpResponse.fromResultIntent(data);
+
+        // Successfully signed in
+        if (resultCode == ResultCodes.OK) {
+            Log.d("response",response.getEmail() + response.getIdpSecret());
+
+            if(!result.isDrawerOpen())
+                result.openDrawer();
+            return;
+        } else {
+            // Sign in failed
+            if (response == null) {
+                // User pressed back button
+                showSnackbar("sign in cancelled");
+                return;
+            }
+
+            if (response.getErrorCode() == ErrorCodes.NO_NETWORK) {
+                showSnackbar("no internet connection");
+                return;
+            }
+
+            if (response.getErrorCode() == ErrorCodes.UNKNOWN_ERROR) {
+                showSnackbar("unknown error");
+                return;
+            }
+        }
+
+        showSnackbar("unknown sign in response");
+    }
+
+    @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.d("MainActivity", "onConnectionFailed:" + connectionResult);
         ViewGroup container = (ViewGroup) findViewById(R.id.snackbar_layout);
         Snackbar.make(container, getString(R.string.google_play_services_error), Snackbar.LENGTH_SHORT).show();
+    }
+
+    private void showSnackbar(String msg) {
+        ViewGroup container = (ViewGroup) this.findViewById(R.id.snackbar_layout);
+        Snackbar.make(container, msg, Snackbar.LENGTH_SHORT).show();
     }
 }

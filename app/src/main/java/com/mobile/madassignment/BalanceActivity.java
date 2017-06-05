@@ -256,8 +256,8 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
                             for(DataSnapshot balance : data.child("balance").getChildren()){
 
                                 if(memberMap.containsKey(balance.getKey())){
-                                    Log.v("balanceyyy", balance.getValue().toString());
-                                    memberMap.get(balance.getKey()).setBalance(Float.parseFloat(balance.getValue().toString()));
+                                    Log.v("balanceyyy", balance.child("balance").getValue().toString());
+                                    memberMap.get(balance.getKey()).setBalance(Float.parseFloat(balance.child("balance").getValue().toString()));
                                 }else{
                                     //TODO
                                 }
@@ -314,7 +314,16 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
 
 
                         }
-//
+//                        float spending = total_spending/total_members;
+//                        Log.v("totalSpending",total_spending+"");
+//                        Log.v("totalMumber",total_members+"");
+//                        Log.v("avg ",spending+"");
+//                        for(GroupMember member: memberMap.values()){
+//                            member.setSpending(spending);
+//                            members.add(member);
+//                        }
+
+                        balanceListViewAdapter.notifyDataSetChanged();
                     }
 
                     @Override

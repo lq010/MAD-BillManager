@@ -98,12 +98,18 @@ public class UserProfileActivity extends Activity {
         back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Intent result = new Intent();
+
+                setResult(Activity.RESULT_OK,result);
+
                 UserProfileActivity.this.finish();
             }
         });
 
         final String name = user.getDisplayName();
         String emailstr = user.getEmail();
+
+
         //Uri photo = user.getPhotoUrl();
 
         //Toast.makeText(UserProfileActivity.this, "url:" + photo.toString(),Toast.LENGTH_SHORT ).show();
@@ -201,6 +207,7 @@ public class UserProfileActivity extends Activity {
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                             // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
                             Toast.makeText(UserProfileActivity.this, "Photo update success.", Toast.LENGTH_SHORT).show();
+                            mRootRef.child("users").child(user.getUid()).child("photoFile").setValue(user.getUid());
                             //Uri downloadUrl = taskSnapshot.getDownloadUrl();
                         }
                     });

@@ -1,27 +1,33 @@
 package com.mobile.madassignment;
 
 import android.app.Activity;
-import android.content.DialogInterface;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AlertDialog;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
@@ -40,15 +46,17 @@ import com.mobile.madassignment.models.Expense;
 import com.mobile.madassignment.models.GroupMember;
 import com.mobile.madassignment.util.DataFormat;
 import com.mobile.madassignment.models.UpdateExpenseListEvent;
+import com.mobile.madassignment.util.SimpleDividerItemDecoration;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
+
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
 
 public class MainFragment extends Fragment {
 
@@ -72,16 +80,20 @@ public class MainFragment extends Fragment {
     private TextView tv_totalSpending;
     private RecyclerView rv_members;
     private LinearLayout ll_invite_button;
-    private TextView tv_expense_date;
+    private TextView tv_currency_name;
+    private TextView deletedMark;
 
-    private List<Long> expenseKeys;
+    private List<String> expenseKeys;
     private int numOfmembers=1;
     private float totalSpending;
     private FirebaseAuth mAuth;
     private FirebaseUser user;
-    private Map<String, String> suerId_nameMap;
+    private HashMap<String, String> userId_nameMap = new HashMap<>();;
     private GroupMember me = new GroupMember();
-   // public String cost;
+    private String groupName;
+    private String currency;
+    private float my_balance = -1;
+
     public static MainFragment newInstance(String param1, String param2) {
         MainFragment fragment = new MainFragment();
         Bundle args = new Bundle();
@@ -96,6 +108,7 @@ public class MainFragment extends Fragment {
 
         Bundle bundle = this.getArguments();
         if(bundle!= null){
+
             group_key = bundle.getString("group_key");
             Log.v("get_arg ", group_key);
         }
@@ -107,6 +120,7 @@ public class MainFragment extends Fragment {
         super.onStart();
         Log.v(TAG,"event bus start");
         EventBus.getDefault().register(this);
+
     }
 
     @Override
@@ -131,7 +145,7 @@ public class MainFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v =  inflater.inflate(R.layout.fragment_main, container, false);
-
+        setHasOptionsMenu(true);
 
         add_expense = (FloatingActionButton) v.findViewById(R.id.bt_add_expense);
         myExpenseRecyclerView = (RecyclerView) v.findViewById(R.id.expenseRecyclerView);
@@ -142,83 +156,19 @@ public class MainFragment extends Fragment {
         tv_owenORowendText= (TextView)v.findViewById(R.id.tv_own_or_owned);
         tv_mySpending= (TextView)v.findViewById(R.id.tv_my_spending);
         tv_totalSpending= (TextView)v.findViewById(R.id.tv_group_spending);
+        tv_currency_name = (TextView)v.findViewById(R.id.tv_currency_name);
+
         expenseKeys = new ArrayList<>();
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
 
 
-        //MODIFY EXPENSE
-        myExpenseRecyclerView.addOnItemTouchListener(
-                new RecyclerItemClickListener(this.getContext(), myExpenseRecyclerView ,new RecyclerItemClickListener.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(View view, final int position) {
-                        final Bundle bundle = new Bundle();
-                        bundle.putString("group_key",group_key);
-                        bundle.putString("expense_key",mFirebaseAdapter.getRef(position).getKey());
-
-                        mDatabaseRef.child("expenses").child(group_key).child(mFirebaseAdapter.getRef(position).getKey())
-                                .addValueEventListener(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(DataSnapshot dataSnapshot) {
-                                        Expense ex= dataSnapshot.getValue(Expense.class);
-
-                                       final String cost= String.valueOf(ex.getCost());
-                                        bundle.putString("cost",cost);
-
-                                        Intent i= new Intent( getActivity(),ModifyExpenseActivity.class );
-                                        i.putExtras(bundle);
-
-                                        String coste=i.getExtras().getString("cost");
-                                        i.putExtras(bundle);
-                                        startActivity(i);
-                                    }
-
-                                    @Override
-                                    public void onCancelled(DatabaseError databaseError) {
-
-                                    }
-                                }
-                        );
-
-
-                    }
-
-                    @Override public void onLongItemClick(View view, int position) {
-
-                        final String exp_key = mFirebaseAdapter.getRef(position).getKey();
-
-                        final AlertDialog.Builder alert= new AlertDialog.Builder(getActivity());
-                        alert.setTitle("Confirm Delete");
-                        alert.setMessage("Are you sure you want to delete this expense?");
-                        alert.setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                mDatabaseRef.child("expenses").child(group_key).child(exp_key).removeValue(new DatabaseReference.CompletionListener() {
-                                    @Override
-                                    public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                                        Toast.makeText( getContext(),"Expense Deleted",Toast.LENGTH_LONG).show();
-                                    }
-                                });
-                            }
-                        });
-                        alert.setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                dialogInterface.dismiss();
-                            }
-                        });
-                        alert.show();
-
-                    }
-                })
-        );
-
         mDatabaseRef  = FirebaseDatabase.getInstance().getReference();
-        suerId_nameMap = new HashMap<>();
+
         mDatabaseRef.child("groups").child(group_key).child("members").addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                suerId_nameMap.put(dataSnapshot.getKey(),dataSnapshot.getValue().toString());
+                userId_nameMap.put(dataSnapshot.getKey(),dataSnapshot.getValue().toString());
                 Log.d("put to map", dataSnapshot.getKey()+"= "+dataSnapshot.getValue().toString());
             }
 
@@ -235,6 +185,30 @@ public class MainFragment extends Fragment {
             @Override
             public void onChildMoved(DataSnapshot dataSnapshot, String s) {
 
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+        mDatabaseRef.child("groups").child(group_key).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                 groupName = dataSnapshot.child("name").getValue().toString();
+                ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+                Log.d(TAG,"actionbar = "+actionBar.toString());
+                if(actionBar!=null){
+                    actionBar.setTitle(groupName);
+
+
+
+                }
+
+
+
+                currency = dataSnapshot.child("currency").getValue().toString();
+                tv_currency_name.setText(currency);
             }
 
             @Override
@@ -269,20 +243,40 @@ public class MainFragment extends Fragment {
 
         DatabaseReference groupMembersRef = mDatabaseRef.child("groups").child(group_key).child("members");
 
-        DatabaseReference userRef = mDatabaseRef.child("users");
+        final DatabaseReference userRef = mDatabaseRef.child("users");
+
+
         //get group members
-        List<String> names = new ArrayList<>();
-        final GroupMemberViewAdapter groupAdapter = new GroupMemberViewAdapter(names , this.getContext());
+        List<GroupMember> members = new ArrayList<>();
+        final GroupMemberViewAdapter groupAdapter = new GroupMemberViewAdapter(members , this.getContext());
 
         groupMembersRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 numOfmembers = (int)dataSnapshot.getChildrenCount();
-                for(DataSnapshot data: dataSnapshot.getChildren()){
+                for(final DataSnapshot data: dataSnapshot.getChildren()){
                     String userId = data.getKey();
                     String userName = data.getValue().toString();
                     Log.v("test key",userId);
-                    groupAdapter.getNames().add(userName);
+                    userRef.child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            GroupMember user = new GroupMember();
+                            user.setName(dataSnapshot.child("name").getValue().toString());
+                            if (dataSnapshot.child("photoFile").exists()){
+                                user.setPhotoFile(dataSnapshot.child("photoFile").getValue().toString());
+                            }
+
+                            Log.d(TAG, "user..."+user.getName()+user.getPhotoFile());
+                            groupAdapter.getusers().add(user);
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+
                 }
                 groupAdapter.notifyDataSetChanged();
             }
@@ -299,13 +293,14 @@ public class MainFragment extends Fragment {
 
         rv_members.setLayoutManager(layoutManager);
         rv_members.setAdapter(groupAdapter);
-////////////
+
         add_expense.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
                 Bundle bundle = new Bundle();
                 bundle.putString("group_key",group_key);
+                bundle.putSerializable("group_members", userId_nameMap);
                 Intent intent = new Intent(getActivity(),AddNewExpenseActivity.class);
                 intent.putExtras(bundle);
                 startActivity(intent);
@@ -375,6 +370,7 @@ public class MainFragment extends Fragment {
                 Log.d("result_activitey","requestCode="+requestCode+", resultCOde= OK");
                 me.reset();
                 totalSpending = 0;
+                my_balance = 0;
                 MainFragment currentFragment = this;
                 FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
                 fragTransaction.detach(currentFragment);
@@ -390,18 +386,73 @@ public class MainFragment extends Fragment {
     }
     // [END on_activity_result]
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+    }
+
     private void updateExpenseList(final String balanceId){
 
+        mDatabaseRef.child("balances").child(group_key).child(balanceId).child("balance").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                float total_spending = 0;
+                float my_spending = 0;
+
+                Log.d(TAG,"balance=" +dataSnapshot.toString());
+                for(DataSnapshot data : dataSnapshot.getChildren()){
+                    total_spending += data.child("spending").getValue(Float.class);
+                    if(user.getUid().matches(data.getKey())){
+                        my_spending = data.child("spending").getValue(Float.class);
+                        my_balance = data.child("balance").getValue(Float.class);
+                    }
+                }
+                tv_balence_value.setText(DataFormat.myDFloatFormat(my_balance));
+                if (my_balance < 0) {
+                    Log.d("Mybalance",my_balance+"");
+                    tv_owenORowendText.setText("you owen");
+                    tv_owenORowendText.setBackgroundColor(Color.RED);
+                }
+
+                tv_mySpending.setText(DataFormat.myDFloatFormat(my_spending));
+                tv_totalSpending.setText(DataFormat.myDFloatFormat(total_spending));
+
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+
         Log.v(TAG, "balanceid "+balanceId);
+
         mFirebaseAdapter = new FirebaseRecyclerAdapter<Expense, ExpenseViewHolder>(
                 Expense.class,
                 R.layout.expense_item,
                 ExpenseViewHolder.class,
                 mDatabaseRef.child("expenses").child(group_key).orderByKey().startAt(balanceId)) {
             @Override
-            protected void populateViewHolder(ExpenseViewHolder viewHolder, Expense expense, int position) {
+            protected void populateViewHolder(ExpenseViewHolder viewHolder, final Expense expense, final int position) {
                 Log.v("expense.type",expense.getType());
                 Log.v("expense.cost",expense.getCost()+"");
+                viewHolder.view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Expense clickedExpense = mFirebaseAdapter.getItem(position);
+                        Intent intent = new Intent(getActivity(),ExpenseDetailActivity.class);
+                        Bundle bundle = new Bundle();
+                        bundle.putString("group_key",group_key);
+                        bundle.putString("group_name",groupName);
+                        bundle.putString("currency",currency);
+                        bundle.putSerializable("expense",expense);
+                        intent.putExtras(bundle);
+                        startActivity(intent);
+                    }
+                });
 
                 String type = expense.getType();
                 if(expense.getDescription().matches("")||expense.getDescription()==null){
@@ -410,14 +461,13 @@ public class MainFragment extends Fragment {
                 }else {
                     viewHolder.type.setText(expense.getDescription());
                 }
-
-                viewHolder.cost.setText(expense.getCost() +" €");
+                viewHolder.cost.setText(expense.getCost()+"" );
                 if(expense.getPayer().matches(user.getUid())){  //TODO
                     viewHolder.payer.setText("you payed ");
                     viewHolder.payer.setTextColor(Color.GREEN);
                 }else {
 
-                    viewHolder.payer.setText( suerId_nameMap.get(expense.getPayer())+ " payed ");
+                    viewHolder.payer.setText( userId_nameMap.get(expense.getPayer())+ " payed ");
                     viewHolder.payer.setTextColor(Color.RED);
                 }
                 switch (type){
@@ -438,34 +488,41 @@ public class MainFragment extends Fragment {
                         break;
                 }
                 viewHolder.createTime.setText(expense.getFormatDate());
-                //TODO get userid (userid1 is a default id)
 
-                if(!expenseKeys.contains(expense.getCreateTime())){
-                    if (expense.getPayer().matches(user.getUid())) {
-                        float temp = me.getPayed() + expense.getCost();
-                        me.setPayed(temp);
-                    }
-                    totalSpending += expense.getCost();
-                    Log.v("payerId", expense.getPayer());
-                    Log.v("me_payed", me.getPayed() + "");
-                    Log.v("me_spending", me.getSpending() + "");
-                    Log.v("totalSpending ", totalSpending + "");
+               if( expense.getStatus().matches("deleted")){
+                   viewHolder.deletedMark.setVisibility(View.VISIBLE);
+               }
 
-                    float avgSpending = totalSpending / numOfmembers;
-                    Log.v("numOfmembers ", numOfmembers + "");
-                    Log.v("mySpending ", avgSpending + "");
-                    float mybalance = me.getPayed() - avgSpending;
-                    tv_balence_value.setText(DataFormat.myDFloatFormat(mybalance));
-                    if (mybalance < 0) {
-                        Log.v("Mybalance",mybalance+"");
-                        tv_owenORowendText.setText("you owen");
-                        tv_owenORowendText.setBackgroundColor(Color.RED);
-                    }
-
-                    tv_mySpending.setText(DataFormat.myDFloatFormat(avgSpending));
-                    tv_totalSpending.setText(DataFormat.myDFloatFormat(totalSpending));
-                    expenseKeys.add(expense.getCreateTime());
-                }
+//                if(!expenseKeys.contains(expense.getId())){
+//
+//                    totalSpending += expense.getCost();
+//
+//                    if(expense.getParticipants().containsKey(user.getUid())){
+//                        if (expense.getPayer().matches(user.getUid())) {
+//                            me.setPayed(me.getPayed() + expense.getCost());
+//                        }
+//                        float avgSpending = expense.getCost() / expense.getParticipants().size();
+//                        me.setSpending(me.getSpending()+avgSpending);
+//                        me.setBalance(me.getPayed()-me.getSpending());
+//                    }
+//                    Log.d("payerId", expense.getPayer());
+//                    Log.d("me_payed", me.getPayed() + "");
+//                    Log.d("me_spending", me.getSpending() + "");
+//                    Log.d("totalSpending ", totalSpending + "");
+//                    Log.d("participants ", expense.getParticipants().size() + "");
+//                    Log.d("mySpending ", me.getSpending() + "");
+//
+//                    tv_balence_value.setText(DataFormat.myDFloatFormat(me.getBalance()));
+//                    if (me.getBalance() < 0) {
+//                        Log.d("Mybalance",me.getBalance()+"");
+//                        tv_owenORowendText.setText("you owen");
+//                        tv_owenORowendText.setBackgroundColor(Color.RED);
+//                    }
+//
+//                    tv_mySpending.setText(DataFormat.myDFloatFormat(me.getSpending()));
+//                    tv_totalSpending.setText(DataFormat.myDFloatFormat(totalSpending));
+//                    expenseKeys.add(expense.getId());
+//                }
 
             }
         };
@@ -473,14 +530,60 @@ public class MainFragment extends Fragment {
         mLinearLayoutManager = new LinearLayoutManager(this.getActivity());
         mLinearLayoutManager.setStackFromEnd(true);
         mLinearLayoutManager.setReverseLayout(true);
+        myExpenseRecyclerView.addItemDecoration(new SimpleDividerItemDecoration(this.getActivity()));
         myExpenseRecyclerView.setLayoutManager(mLinearLayoutManager);
         myExpenseRecyclerView.setAdapter(mFirebaseAdapter);
     }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.main, menu);
+        super.onCreateOptionsMenu(menu,inflater);
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()){
+            case R.id.action_exit_group:
+                if(!isInternetAvailable(this.getContext())){
+                    showMessage("Please connect to the Internet");
+                }else{
+                    if (my_balance!=0){
+                        showMessage("Your balance is "+my_balance+ ". You can not exit this group yet");
+                    }else {
+                        mDatabaseRef.child("users").child(user.getUid()).child("groups").child(group_key).removeValue();
+                        mDatabaseRef.child("groups").child(group_key).child("members").child(user.getUid()).removeValue();
+                        showMessage("Exit group successful");
+                        MainFragment currentFragment = this;
+                        FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
+                        fragTransaction.detach(currentFragment);
+                        fragTransaction.addToBackStack(null);
+                        fragTransaction.commit();
+
+                    }
+                }
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
+    }
+
+    //check Internet connection
+    public boolean isInternetAvailable(Context context) {
+        ConnectivityManager cm =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+        return  isConnected;
+
+    }
     private void showMessage(String msg) {
         ViewGroup container = (ViewGroup) getActivity().findViewById(R.id.snackbar_layout);
         Snackbar.make(container, msg, Snackbar.LENGTH_SHORT).show();
     }
+
 
 
 }

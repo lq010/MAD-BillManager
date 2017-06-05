@@ -17,6 +17,9 @@ public  class ExpenseViewHolder extends RecyclerView.ViewHolder {
     public TextView cost;
     public TextView payer;
     public TextView createTime;
+    public TextView deletedMark;
+    public View view;
+
     //public CircleImageView messengerImageView;
 
     public ExpenseViewHolder(View v) {
@@ -26,5 +29,7 @@ public  class ExpenseViewHolder extends RecyclerView.ViewHolder {
         cost = (TextView) itemView.findViewById(R.id.tv_item_item_cost);
         payer = (TextView) itemView.findViewById(R.id.tv_payer);
         createTime = (TextView) v.findViewById(R.id.tv_expense_date);
+        deletedMark = (TextView)v.findViewById(R.id.deleted_mark) ;
+        view = v;
     }
 }

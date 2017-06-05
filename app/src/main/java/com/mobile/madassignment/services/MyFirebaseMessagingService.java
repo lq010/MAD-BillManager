@@ -14,6 +14,8 @@ import com.firebase.jobdispatcher.GooglePlayDriver;
 import com.firebase.jobdispatcher.Job;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.mobile.madassignment.MainActivity;
@@ -43,11 +45,22 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 scheduleJob();
             } else {
                 // Handle message within 10 seconds
-                String messageBody = "a new expense created";
-                String groupKey = remoteMessage.getData().get("groupId");
-                String createdBy = remoteMessage.getData().get("createdBy");
-                if (!createdBy.matches(user.getUid()))
-                    sendNotification(messageBody, groupKey );
+                // a expense was added
+                if(remoteMessage.getData().get("actionType").matches("newExpense")){
+                    String groupKey = remoteMessage.getData().get("groupId");
+                    String groupName = remoteMessage.getData().get("groupName");
+                    String createdBy = remoteMessage.getData().get("creatorName");
+                    String messageBody = "a new expense created by " + createdBy +"(group: " + groupName+")";
+                    String messageTitle = "new expense";
+                    sendNotification(messageTitle, messageBody, groupKey );
+                }else if(remoteMessage.getData().get("actionType").matches("deleteExpense")){
+                    String groupKey = remoteMessage.getData().get("groupId");
+                    String groupName = remoteMessage.getData().get("groupName");
+                    String createdBy = remoteMessage.getData().get("creatorName");
+                    String messageBody = "a expense deleted by " + createdBy +"(group: " + groupName+")";
+                    String messageTitle = "a expense";
+                    sendNotification(messageTitle, messageBody, groupKey );
+                }
             }
 
         }
@@ -83,7 +96,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
      *
      * @param messageBody FCM message body received.
      */
-    private void sendNotification(String messageBody, String groupKey) {
+    private void sendNotification(String messageTitle, String messageBody, String groupKey) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra("group_key",groupKey);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -93,8 +106,9 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_stat_ic_notification)
-                .setContentTitle("FCM Message")
+                .setContentTitle(messageTitle)
                 .setContentText(messageBody)
+
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri)
                 .setContentIntent(pendingIntent);

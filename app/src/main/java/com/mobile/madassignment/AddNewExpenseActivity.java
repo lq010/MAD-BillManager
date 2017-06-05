@@ -4,6 +4,7 @@ package com.mobile.madassignment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
@@ -11,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.mikephil.charting.utils.Utils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
@@ -19,6 +21,7 @@ import com.mobile.madassignment.Adapter.ExpenseTypeAdapter;
 import com.mobile.madassignment.Adapter.ExpenseTypeViewPagerAdapter;
 import com.mobile.madassignment.models.Expense;
 import com.mobile.madassignment.models.ExpenseType;
+import com.mobile.madassignment.util.DataFormat;
 import com.mobile.madassignment.view.NoScrollGridView;
 
 
@@ -28,9 +31,10 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
-public class AddNewExpenseActivity extends AppCompatActivity implements View.OnClickListener {
+public class AddNewExpenseActivity extends AppCompatActivity implements View.OnTouchListener {
     private ImageView ivNewExpenseBack;
     private ViewPager vpNewExpense;
     private ImageView ivNewExpenseState;//page
@@ -57,6 +61,7 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnC
     private ImageView ivInputAdd;
 
     private String group_key;
+    private HashMap<String, String> participants;
     private FirebaseUser user;
     private FirebaseAuth mAuth;
 
@@ -96,144 +101,221 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnC
 
         ivNewExpenseState = (ImageView) findViewById(R.id.iv_new_record_state);
         group_key = getIntent().getExtras().getString("group_key");
+        participants = (HashMap<String,String>)getIntent().getExtras().getSerializable("group_members");
         initViewPagerData();
         initViewListener();
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
+
     }
 
+
+
     @Override
-    public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.iv_input_iv0:
-                if (result.startsWith("0")) {
-                    if (result.length() != 1)
-                        result += "0";
-                }else{
-                    result += "0";
-                }
-                break;
-            case R.id.iv_input_iv1:
-                if (result.equals("0")) {
-                    result = "1";
-                } else {
-                    result += "1";
-                }
-                break;
-            case R.id.iv_input_iv2:
-                if (result.equals("0")) {
-                    result = "2";
-                } else {
-                    result += "2";
-                }
-                break;
-            case R.id.iv_input_iv3:
-                if (result.equals("0")) {
-                    result = "3";
-                } else {
-                    result += "3";
-                }
-                break;
-            case R.id.iv_input_iv4:
-                if (result.equals("0")) {
-                    result = "4";
-                } else {
-                    result += "4";
-                }
-                break;
-            case R.id.iv_input_iv5:
-                if (result.equals("0")) {
-                    result = "5";
-                } else {
-                    result += "5";
-                }
-                break;
-            case R.id.iv_input_iv6:
-                if (result.equals("0")) {
-                    result = "6";
-                } else {
-                    result += "6";
-                }
-                break;
-            case R.id.iv_input_iv7:
-                if (result.equals("0")) {
-                    result = "7";
-                } else {
-                    result += "7";
-                }
-                break;
-            case R.id.iv_input_iv8:
-                if (result.equals("0")) {
-                    result = "8";
-                } else {
-                    result += "8";
-                }
-                break;
-            case R.id.iv_input_iv9:
-                if (result.equals("0")) {
-                    result = "9";
-                } else {
-                    result += "9";
-                }
-                break;
-            case R.id.iv_input_point:
-                if (!result.contains(".")) {
-                    result += ".";
-                }
-                break;
-            case R.id.iv_input_delete:
-                if (result.length() == 1) {
-                    result = "0";
-                } else {
-                    result = result.substring(0, result.length() - 1);
-                }
-                break;
-            case R.id.iv_input_ok:
-                if(user==null){
-                    Toast.makeText(AddNewExpenseActivity.this, "please login！", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                if(selectedType==null){
-                    Toast.makeText(AddNewExpenseActivity.this, "please chose a type！", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                if(Float.parseFloat(result)==0){
-                    Toast.makeText(AddNewExpenseActivity.this, "please enter cost！", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                if(group_key.matches("")){
-                    Toast.makeText(AddNewExpenseActivity.this, "service error", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+    public boolean onTouch(View view, MotionEvent motionEvent) {
+        switch (motionEvent.getAction()){
+            case MotionEvent.ACTION_DOWN:
 
-                String expense_key = mDatebaseRef.push().getKey();
-                Expense newExpense = new Expense();
-                NumberFormat formatter = new DecimalFormat("#.##");
-                float cost = Float.parseFloat(result);
+                switch (view.getId()) {
 
-                newExpense.setCost(cost);
+                    case R.id.iv_input_iv0:
+                        ivInputIv0.setImageResource(R.mipmap.c_c35);
+                        if (result.startsWith("0")) {
+                            if (result.length() != 1)
+                                result += "0";
+                        }else{
+                            result += "0";
+                        }
 
-                newExpense.setType(selectedType.getName());
-                //
-                newExpense.setPayer(user.getUid());
+                        break;
+                    case R.id.iv_input_iv1:
+                        ivInputIv1.setImageResource(R.mipmap.c_c20);
+                        if (result.equals("0")) {
+                            result = "1";
+                        } else {
+                            result += "1";
+                        }
 
-                //
-                String descriotion = description.getText().toString();
-                if(!descriotion.matches("")){
-                    newExpense.setDescription(description.getText().toString());
-                }else{
-                    newExpense.setDescription("");
+                        break;
+                    case R.id.iv_input_iv2:
+                        ivInputIv2.setImageResource(R.mipmap.c_c21);
+                        if (result.equals("0")) {
+                            result = "2";
+                        } else {
+                            result += "2";
+                        }
+
+                        break;
+                    case R.id.iv_input_iv3:
+                        ivInputIv3.setImageResource(R.mipmap.c_c22);
+                        if (result.equals("0")) {
+                            result = "3";
+                        } else {
+                            result += "3";
+                        }
+
+                        break;
+                    case R.id.iv_input_iv4:
+                        ivInputIv4.setImageResource(R.mipmap.c_c23);
+                        if (result.equals("0")) {
+                            result = "4";
+                        } else {
+                            result += "4";
+                        }
+
+                        break;
+                    case R.id.iv_input_iv5:
+                        ivInputIv5.setImageResource(R.mipmap.c_c24);
+                        if (result.equals("0")) {
+                            result = "5";
+                        } else {
+                            result += "5";
+                        }
+
+                        break;
+                    case R.id.iv_input_iv6:
+                        ivInputIv6.setImageResource(R.mipmap.c_c25);
+                        if (result.equals("0")) {
+                            result = "6";
+                        } else {
+                            result += "6";
+                        }
+
+                        break;
+                    case R.id.iv_input_iv7:
+                        ivInputIv7.setImageResource(R.mipmap.c_c26);
+                        if (result.equals("0")) {
+                            result = "7";
+                        } else {
+                            result += "7";
+                        }
+
+                        break;
+                    case R.id.iv_input_iv8:
+                        ivInputIv8.setImageResource(R.mipmap.c_c27);
+                        if (result.equals("0")) {
+                            result = "8";
+                        } else {
+                            result += "8";
+                        }
+
+                        break;
+                    case R.id.iv_input_iv9:
+                        ivInputIv9.setImageResource(R.mipmap.c_c28);
+                        if (result.equals("0")) {
+                            result = "9";
+                        } else {
+                            result += "9";
+                        }
+                        break;
+                    case R.id.iv_input_point:
+                        ivInputPoint.setImageResource(R.mipmap.c_c36);
+                        if (!result.contains(".")) {
+                            result += ".";
+                        }
+                        break;
+                    case R.id.iv_input_delete:
+                        ivInputDelete.setImageResource(R.mipmap.c_c03);
+                        if (result.length() == 1) {
+                            result = "0";
+                        } else {
+                            result = result.substring(0, result.length() - 1);
+                        }
+                        break;
+                    case R.id.iv_input_ok:
+                        ivInputOk.setImageResource(R.mipmap.c_c37);
+                        if(user==null){
+                            Toast.makeText(AddNewExpenseActivity.this, "please login！", Toast.LENGTH_SHORT).show();
+                            return true;
+                        }
+                        if(selectedType==null){
+                            Toast.makeText(AddNewExpenseActivity.this, "please chose a type！", Toast.LENGTH_SHORT).show();
+                            return true;
+                        }
+                        if(Float.parseFloat(result)==0){
+                            Toast.makeText(AddNewExpenseActivity.this, "please enter cost！", Toast.LENGTH_SHORT).show();
+                            return true;
+                        }
+                        if(group_key.matches("")){
+                            Toast.makeText(AddNewExpenseActivity.this, "service error", Toast.LENGTH_SHORT).show();
+                            return true;
+                        }
+
+                        String expense_key = mDatebaseRef.push().getKey();
+                        Expense newExpense = new Expense();
+                        float cost = Float.parseFloat(DataFormat.myDFloatFormat(Float.parseFloat(result)));
+
+                        newExpense.setCost(cost);
+
+                        newExpense.setType(selectedType.getName());
+                        //
+                        newExpense.setPayer(user.getUid());
+                        newExpense.setParticipants(participants);
+                        newExpense.setId(expense_key);
+                        //
+                        String descriotion = description.getText().toString();
+                        if(!descriotion.matches("")){
+                            newExpense.setDescription(description.getText().toString());
+                        }else{
+                            newExpense.setDescription("");
+                        }
+
+                        mDatebaseRef.child("expenses").child(group_key).child(expense_key).setValue(newExpense);
+
+                        this.finish();
+                        break;
+                    case R.id.iv_new_record_back:
+                        this.finish();
+                        break;
                 }
-
-                mDatebaseRef.child("expenses").child(group_key).child(expense_key).setValue(newExpense);
-
-                this.finish();
                 break;
-            case R.id.iv_new_record_back:
-                this.finish();
+            case MotionEvent.ACTION_UP:
+                switch (view.getId()){
+                    case R.id.iv_input_iv0:
+                        ivInputIv0.setImageResource(R.mipmap.c_c31);
+                        break;
+                    case R.id.iv_input_iv1:
+                        ivInputIv1.setImageResource(R.mipmap.c_c04);
+                        break;
+                    case R.id.iv_input_iv2:
+                        ivInputIv2.setImageResource(R.mipmap.c_c05);
+                        break;
+                    case R.id.iv_input_iv3:
+                        ivInputIv3.setImageResource(R.mipmap.c_c06);
+                        break;
+                    case R.id.iv_input_iv4:
+                        ivInputIv4.setImageResource(R.mipmap.c_c07);
+                        break;
+                    case R.id.iv_input_iv5:
+                        ivInputIv5.setImageResource(R.mipmap.c_c08);
+                        break;
+                    case R.id.iv_input_iv6:
+                        ivInputIv6.setImageResource(R.mipmap.c_c09);
+                        break;
+                    case R.id.iv_input_iv7:
+                        ivInputIv7.setImageResource(R.mipmap.c_c10);
+                        break;
+                    case R.id.iv_input_iv8:
+                        ivInputIv8.setImageResource(R.mipmap.c_c11);
+                        break;
+                    case R.id.iv_input_iv9:
+                        ivInputIv9.setImageResource(R.mipmap.c_c12);
+                        break;
+                    case R.id.iv_input_point:
+                        ivInputPoint.setImageResource(R.mipmap.c_c32);
+                        break;
+                    case R.id.iv_input_delete:
+                        ivInputDelete.setImageResource(R.mipmap.c_c02);
+                        break;
+                    case R.id.iv_input_ok:
+                        ivInputOk.setImageResource(R.mipmap.c_c33);
+                        break;
+                }
                 break;
         }
+
         tvInputResult.setText(result);
+        return true;
     }
 
 
@@ -286,21 +368,120 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnC
         selectedType = gvList.get(position);
     }
     private void initViewListener() {
-        ivInputIv0.setOnClickListener(this);
-        ivInputIv1.setOnClickListener(this);
-        ivInputIv2.setOnClickListener(this);
-        ivInputIv3.setOnClickListener(this);
-        ivInputIv4.setOnClickListener(this);
-        ivInputIv5.setOnClickListener(this);
-        ivInputIv6.setOnClickListener(this);
-        ivInputIv7.setOnClickListener(this);
-        ivInputIv8.setOnClickListener(this);
-        ivInputIv9.setOnClickListener(this);
-        //ivInputAdd.setOnClickListener(this);
-        ivInputPoint.setOnClickListener(this);
-        ivInputDelete.setOnClickListener(this);
-        ivInputOk.setOnClickListener(this);
+
         tvInputResult.setText(result);
-        ivNewExpenseBack.setOnClickListener(this);
+//        ivNewExpenseBack.setOnClickListener(this);
+
+        ivInputIv0.setOnTouchListener(this);
+        ivInputIv1.setOnTouchListener(this);
+        ivInputIv2.setOnTouchListener(this);
+        ivInputIv3.setOnTouchListener(this);
+        ivInputIv4.setOnTouchListener(this);
+        ivInputIv5.setOnTouchListener(this);
+        ivInputIv6.setOnTouchListener(this);
+        ivInputIv7.setOnTouchListener(this);
+        ivInputIv8.setOnTouchListener(this);
+        ivInputIv9.setOnTouchListener(this);
+        //ivInputAdd.setOnTouchListener(this);
+        ivInputPoint.setOnTouchListener(this);
+        ivInputDelete.setOnTouchListener(this);
+        ivInputOk.setOnTouchListener(this);
+        ivNewExpenseBack.setOnTouchListener(this);
     }
+
+
+//    @Override
+//    public boolean onTouch(View view, MotionEvent motionEvent) {
+//        switch (motionEvent.getAction()){
+//            case MotionEvent.ACTION_DOWN:
+//                switch (view.getId()){
+//                    case R.id.iv_input_iv0:
+//                        ivInputIv0.setImageResource(R.mipmap.c_c35);
+//                        break;
+//                    case R.id.iv_input_iv1:
+//                        ivInputIv1.setImageResource(R.mipmap.c_c20);
+//                        break;
+//                    case R.id.iv_input_iv2:
+//                        ivInputIv2.setImageResource(R.mipmap.c_c21);
+//                        break;
+//                    case R.id.iv_input_iv3:
+//                        ivInputIv3.setImageResource(R.mipmap.c_c22);
+//                        break;
+//                    case R.id.iv_input_iv4:
+//                        ivInputIv4.setImageResource(R.mipmap.c_c23);
+//                        break;
+//                    case R.id.iv_input_iv5:
+//                        ivInputIv5.setImageResource(R.mipmap.c_c24);
+//                        break;
+//                    case R.id.iv_input_iv6:
+//                        ivInputIv6.setImageResource(R.mipmap.c_c25);
+//                        break;
+//                    case R.id.iv_input_iv7:
+//                        ivInputIv7.setImageResource(R.mipmap.c_c26);
+//                        break;
+//                    case R.id.iv_input_iv8:
+//                        ivInputIv8.setImageResource(R.mipmap.c_c27);
+//                        break;
+//                    case R.id.iv_input_iv9:
+//                        ivInputIv9.setImageResource(R.mipmap.c_c28);
+//                        break;
+//                    case R.id.iv_input_point:
+//                        ivInputPoint.setImageResource(R.mipmap.c_c36);
+//                        break;
+//                    case R.id.iv_input_delete:
+//                        ivInputDelete.setImageResource(R.mipmap.c_c03);
+//                        break;
+//                    case R.id.iv_input_ok:
+//                        ivInputOk.setImageResource(R.mipmap.c_c37);
+//                        break;
+//                }
+//                break;
+//            case MotionEvent.ACTION_UP:
+//                switch (view.getId()){
+//                    case R.id.iv_input_iv0:
+//                        ivInputIv0.setImageResource(R.mipmap.c_c31);
+//                        break;
+//                    case R.id.iv_input_iv1:
+//                        ivInputIv1.setImageResource(R.mipmap.c_c04);
+//                        break;
+//                    case R.id.iv_input_iv2:
+//                        ivInputIv2.setImageResource(R.mipmap.c_c05);
+//                        break;
+//                    case R.id.iv_input_iv3:
+//                        ivInputIv3.setImageResource(R.mipmap.c_c06);
+//                        break;
+//                    case R.id.iv_input_iv4:
+//                        ivInputIv4.setImageResource(R.mipmap.c_c07);
+//                        break;
+//                    case R.id.iv_input_iv5:
+//                        ivInputIv5.setImageResource(R.mipmap.c_c08);
+//                        break;
+//                    case R.id.iv_input_iv6:
+//                        ivInputIv6.setImageResource(R.mipmap.c_c09);
+//                        break;
+//                    case R.id.iv_input_iv7:
+//                        ivInputIv7.setImageResource(R.mipmap.c_c10);
+//                        break;
+//                    case R.id.iv_input_iv8:
+//                        ivInputIv8.setImageResource(R.mipmap.c_c11);
+//                        break;
+//                    case R.id.iv_input_iv9:
+//                        ivInputIv9.setImageResource(R.mipmap.c_c12);
+//                        break;
+//                    case R.id.iv_input_point:
+//                        ivInputPoint.setImageResource(R.mipmap.c_c32);
+//                        break;
+//                    case R.id.iv_input_delete:
+//                        ivInputDelete.setImageResource(R.mipmap.c_c02);
+//                        break;
+//                    case R.id.iv_input_ok:
+//                        ivInputOk.setImageResource(R.mipmap.c_c33);
+//                        break;
+//                }
+//                break;
+//        }
+//        return true;
+//
+//
+//    }
 }
