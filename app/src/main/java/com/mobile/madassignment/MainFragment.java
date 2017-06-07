@@ -491,6 +491,7 @@ public class MainFragment extends Fragment {
 
                if( expense.getStatus().matches("deleted")){
                    viewHolder.deletedMark.setVisibility(View.VISIBLE);
+                   viewHolder.deleteMark_line.setVisibility(View.VISIBLE);
                }
 
 //                if(!expenseKeys.contains(expense.getId())){

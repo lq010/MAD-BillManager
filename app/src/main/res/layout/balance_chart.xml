@@ -1,12 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
-<com.github.mikephil.charting.charts.BarChart
-    android:layout_width="match_parent"
-    android:layout_height="400dp"
-    android:id="@+id/balance_bar">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        >
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
 
-</com.github.mikephil.charting.charts.BarChart>
-</LinearLayout>
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/rv_pie">
+
+                <com.github.mikephil.charting.charts.PieChart
+                   android:id="@+id/balance_pieChart"
+                    android:layout_width="match_parent"
+                    android:layout_height="230dp"
+                    >
+                </com.github.mikephil.charting.charts.PieChart>
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="50dp"
+                android:layout_marginBottom="50dp"
+                android:id="@+id/rv_bar"
+                android:orientation="vertical"
+                >
+                <Spinner
+                    android:id="@+id/barChart_year_spinner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="1dp"
+
+                    android:gravity="end|center_vertical"
+                    android:layout_alignParentRight="true"/>
+
+                <com.github.mikephil.charting.charts.BarChart
+                    android:layout_width="match_parent"
+                    android:layout_below="@+id/barChart_year_spinner"
+                    android:layout_height="400dp"
+                    android:id="@+id/balance_barChart"
+                    >
+                </com.github.mikephil.charting.charts.BarChart>
+
+            </RelativeLayout>
+        </LinearLayout>
+    </ScrollView>
+</android.support.design.widget.CoordinatorLayout>

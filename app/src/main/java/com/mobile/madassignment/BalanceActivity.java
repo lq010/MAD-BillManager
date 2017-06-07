@@ -2,6 +2,8 @@ package com.mobile.madassignment;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.RectF;
 import android.support.annotation.IntegerRes;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
@@ -20,18 +22,36 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.IAxisValueFormatter;
+import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.github.mikephil.charting.utils.ColorTemplate;
+import com.github.mikephil.charting.utils.MPPointF;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -47,6 +67,8 @@ import com.mobile.madassignment.models.Expense;
 import com.mobile.madassignment.models.Group;
 import com.mobile.madassignment.models.GroupMember;
 import com.mobile.madassignment.models.UpdateExpenseListEvent;
+import com.mobile.madassignment.util.BarChartItemMarker;
+import com.mobile.madassignment.util.DayAxisValueFormatter;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -54,6 +76,7 @@ import java.util.ArrayList;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -66,6 +89,7 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
     private ArrayList<View> pageview;
     private TextView balanceList;
     private TextView balanceChart;
+    private Spinner yearSpinner;
 
     private ImageView scrollbar;
 
@@ -89,10 +113,12 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
     private int total_members;
     private Map<String, GroupMember> memberMap;
     private String newestBalanceKey;
-    //chart
+    //BarChart
     private BarChart barChart;
-    private ArrayList<BarEntry> barEntries;
-    private Map<Integer,Map<Integer,Float>> monthlyExpenses;
+
+    //PieChart
+    private PieChart pieChart;
+
 
     private boolean settled =false;//activity result, if true, refresh the mainfragmeng
     @Override
@@ -104,14 +130,17 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
         LayoutInflater inflater = getLayoutInflater();
         View view1 = inflater.inflate(R.layout.balance_list, null);
         View view2 = inflater.inflate(R.layout.balance_chart, null);
+
         balanceList = (TextView)findViewById(R.id.balance_list);
         balanceChart = (TextView)findViewById(R.id.balance_chart);
         scrollbar = (ImageView)findViewById(R.id.scrollbar);
         bt_back =(ImageView) findViewById(R.id.iv_balance_back);
         bt_settle = (Button) view1.findViewById(R.id.bt_settleUp);
         rv_balance_list = (RecyclerView)view1.findViewById(R.id.rv_balance_list);
-
-        barChart = (BarChart)view2.findViewById(R.id.balance_bar);
+        //chart
+        pieChart = (PieChart) view2.findViewById(R.id.balance_pieChart);
+        barChart = (BarChart)view2.findViewById(R.id.balance_barChart);
+        yearSpinner = (Spinner) view2.findViewById(R.id.barChart_year_spinner);
 
         bt_settle.setOnClickListener(this);
         bt_back.setOnClickListener(this);
@@ -119,11 +148,11 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
         balanceChart.setOnClickListener(this);
         pageview =new ArrayList<View>();
         memberMap = new ConcurrentHashMap<>();
-        monthlyExpenses= new HashMap<>();
+
         pageview.add(view1);
         pageview.add(view2);
 
-        barEntries = new ArrayList<>();
+
         LinearLayoutManager layoutManager = new LinearLayoutManager(view1.getContext());
         rv_balance_list.setLayoutManager(layoutManager);
 
@@ -135,14 +164,14 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
             @Override
 
             public int getCount() {
-                // TODO Auto-generated method stub
+
                 return pageview.size();
             }
 
             @Override
 
             public boolean isViewFromObject(View arg0, Object arg1) {
-                // TODO Auto-generated method stub
+
                 return arg0==arg1;
             }
             //使从ViewGroup中移出当前View
@@ -199,8 +228,10 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
                     break;
                 case 1:
                     animation = new TranslateAnimation(offset, one, 0, 0);
-                    if(init==0)
-                    initBarPage();
+                 //   if(init==0)
+//                    initBarPage();
+                    pieChart.animateXY(1500,600);
+                    barChart.animateXY(1500,1500);
                     break;
             }
 
@@ -220,10 +251,11 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
     }
 
     private void initListpage() {
-
+        /*[balance list]*/
+        //get group names
         mFirebaseRef  = FirebaseDatabase.getInstance().getReference();
         DatabaseReference groupMembersRef = mFirebaseRef.child("groups").child(group_key).child("members");
-//get group members
+        //get group members
         groupMembersRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -242,14 +274,17 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
                 //TODO fail
             }
         });
+
+        //balance list
         final List<GroupMember> members = new ArrayList<>();
         balanceListViewAdapter = new BalanceListViewAdapter(members,BalanceActivity.this);
+        rv_balance_list.setAdapter(balanceListViewAdapter);
 
         mFirebaseRef.child("balances").child(group_key).orderByChild("settledUp").equalTo(false)
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-//                       Log.d("balances",dataSnapshot.getChildren().toString());
+                        //Log.d("balances",dataSnapshot.getChildren().toString());
                         for(DataSnapshot data : dataSnapshot.getChildren()){
                             Log.d("balances",data.getKey().toString());
                             newestBalanceKey = data.getKey().toString();
@@ -265,12 +300,12 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
 
                         }
                         for(GroupMember member: memberMap.values()){
-//                            member.setSpending(spending);
                             if(!members.contains(member))
                                  members.add(member);
                         }
 
                         balanceListViewAdapter.notifyDataSetChanged();
+
                     }
 
                     @Override
@@ -279,51 +314,124 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
                     }
                 });
 
+        /*[balance list end]*/
+        /*[chart data]*/
+        //Pie cahrt
+        final List<PieEntry> pieEntries = new ArrayList<PieEntry>();
+        final Map<String, Float> categoriesPieChartMap = new HashMap<>();
+        //bar chart
+        final List<Integer> years = new ArrayList<>();
+        final ArrayAdapter<Integer> yearListAdapter = new ArrayAdapter<Integer>(this,
+                android.R.layout.simple_spinner_dropdown_item,
+                years
+        );
+        yearSpinner.setAdapter(yearListAdapter);
+        final Map<Integer, ArrayList<BarEntry>> year_barEntryMap = new HashMap<>();
+        final Map<Integer,Map<Integer,Float>> year_monthExpenseMap= new HashMap<>();
+        DayAxisValueFormatter xAxisFormatter = new DayAxisValueFormatter(barChart);
+        BarChartItemMarker mv = new BarChartItemMarker(this, xAxisFormatter);
+        mv.setChartView(barChart); // For bounds control
+        barChart.setMarker(mv); // Set the marker to the chart
 
+        final int CurrentYear = Calendar.getInstance().get(Calendar.YEAR);
+//        years.add(2015);//test value
+//        year_barEntryMap.put(2015,new ArrayList<BarEntry>());
         mFirebaseRef.child("expenses").child(group_key)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         for(DataSnapshot data : dataSnapshot.getChildren()){
                             Expense expense = data.getValue(Expense.class);
-                            total_spending += expense.getCost();
-
-
-                            //expense per month
-                            Calendar calendar = Calendar.getInstance();
-                            calendar.setTimeInMillis(expense.getCreateTime());
-
-
-                            int year = calendar.get(Calendar.YEAR);
-                            int month = calendar.get(Calendar.MONTH)+1;
-
-                            if(monthlyExpenses.containsKey(year)){
-                                if(monthlyExpenses.get(year).containsKey(month)){
-                                    float temp = monthlyExpenses.get(year).get(month) + expense.getCost();
-                                    monthlyExpenses.get(year).put(month,temp);
-                                }else {
-                                    monthlyExpenses.get(year).put(month,expense.getCost());
+                            //if expense is valid
+                            if(!expense.getStatus().matches("deleted")){
+                                total_spending += expense.getCost();
+                                //
+                                if(categoriesPieChartMap.containsKey(expense.getType())){
+                                    float old = categoriesPieChartMap.get(expense.getType());
+                                    categoriesPieChartMap.put(expense.getType(), expense.getCost()+old);
+                                }else{
+                                    categoriesPieChartMap.put(expense.getType(), expense.getCost());
                                 }
 
-                            }else{
-                                Map<Integer,Float> temp2 = new HashMap();
-                                temp2.put(month,expense.getCost());
-                                monthlyExpenses.put(year,temp2);
-                            }
-                            Log.v("year month",  year +" "+month+ " "+ monthlyExpenses.get(year).get(month));
+                                //expense per month
+                                Calendar calendar = Calendar.getInstance();
+                                calendar.setTimeInMillis(expense.getCreateTime());
 
+
+                                int year = calendar.get(Calendar.YEAR);
+                                int month = calendar.get(Calendar.MONTH)+1;
+
+                                if(year_monthExpenseMap.containsKey(year)){
+                                    if(year_monthExpenseMap.get(year).containsKey(month)){
+                                        float temp = year_monthExpenseMap.get(year).get(month) + expense.getCost();
+                                        year_monthExpenseMap.get(year).put(month,temp);
+                                    }else {
+                                        year_monthExpenseMap.get(year).put(month,expense.getCost());
+                                    }
+
+                                }else{
+                                    Map<Integer,Float> newYear = new HashMap();
+                                    newYear.put(month,expense.getCost());
+                                    year_monthExpenseMap.put(year,newYear);
+                                }
+                                Log.v("year month",  year +" "+month+ " "+ year_monthExpenseMap.get(year).get(month));
+
+                            }
 
                         }
-//                        float spending = total_spending/total_members;
-//                        Log.v("totalSpending",total_spending+"");
-//                        Log.v("totalMumber",total_members+"");
-//                        Log.v("avg ",spending+"");
-//                        for(GroupMember member: memberMap.values()){
-//                            member.setSpending(spending);
-//                            members.add(member);
-//                        }
+                        //all expenses loaded
+                        //init Pie Chart
+                        for(String label : categoriesPieChartMap.keySet()){
+                            pieEntries.add(new PieEntry(categoriesPieChartMap.get(label), label));
+                        }
+                        PieDataSet dataSet = new PieDataSet(pieEntries, "(categories)");
+                        dataSet.setColors(ColorTemplate.JOYFUL_COLORS);
+                        dataSet.setValueLinePart1OffsetPercentage(80.f);
+                        dataSet.setValueLinePart1Length(0.2f);
+                        dataSet.setValueLinePart2Length(0.4f);
+                        dataSet.setValueTextSize(13);
+                        dataSet.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+                        PieData data = new PieData(dataSet);
+                        Description description = new Description();
+                        description.setText("total spending: " + total_spending);
+                        pieChart.setDescription(description);
 
-                        balanceListViewAdapter.notifyDataSetChanged();
+                        pieChart.setData(data);
+                        pieChart.invalidate();
+                        //init Bar chart
+
+                        for (int year: year_monthExpenseMap.keySet()){
+                            Log.v("year",year+"");
+                            years.add(year);
+                            final ArrayList<BarEntry> yVals = new ArrayList<BarEntry>();
+                            for(int month = 1; month <12;month++){
+                                if(year_monthExpenseMap.get(year).containsKey(month)){
+                                    yVals.add(new BarEntry(month,year_monthExpenseMap.get(year).get(month)));
+                                }else{
+                                    yVals.add(new BarEntry(month,0f));
+                                }
+                            }
+
+                            year_barEntryMap.put(year,yVals);
+
+                        }
+
+
+                        yearListAdapter.notifyDataSetChanged();
+                        yearSpinner.setSelection(yearListAdapter.getCount());
+                        yearSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                            @Override
+                            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                                drawBarChart(year_barEntryMap.get(yearSpinner.getSelectedItem()),(int)yearSpinner.getSelectedItem());
+                            }
+
+                            @Override
+                            public void onNothingSelected(AdapterView<?> parent) {
+
+                            }
+                        });
+                        drawBarChart(year_barEntryMap.get(CurrentYear),CurrentYear);
+
                     }
 
                     @Override
@@ -332,36 +440,64 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
                     }
                 });
 
+        final RectF mOnValueSelectedRectF = new RectF();
+        barChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
+            @Override
+            public void onValueSelected(Entry e, Highlight h) {
+                if (e == null)
+                    return;
 
-        rv_balance_list.setAdapter(balanceListViewAdapter);
+                RectF bounds = mOnValueSelectedRectF;
+                barChart.getBarBounds((BarEntry) e, bounds);
+                MPPointF position = barChart.getPosition(e, YAxis.AxisDependency.LEFT);
 
-    }
 
-    private void initBarPage(){
-//        for(int i : monthlyExpenses.get(2017).keySet()){
-//            barEntries.add(new BarEntry( monthlyExpenses.get(2017).get(i),i));
-//        }
-        ArrayList<String> month = new ArrayList<>();
-        for(int j=1 ;j<13;++j){
-            if(monthlyExpenses.containsKey(2017)){
-                if(monthlyExpenses.get(2017).containsKey(j)){
-                    barEntries.add(new BarEntry( monthlyExpenses.get(2017).get(j),j-1));
-                }else{
-                    barEntries.add(new BarEntry( 0,j-1));
-                }
-            }else{
-                barEntries.add(new BarEntry( 0,j-1));
+                MPPointF.recycleInstance(position);
             }
 
-            month.add(j+"");
-        }
+            @Override
+            public void onNothingSelected() {
 
+            }
+        });
 
-        BarDataSet barDataSet = new BarDataSet(barEntries,"year 2017");
-        BarData barData = new BarData(month,barDataSet);
-        barChart.setData(barData);
-        init = 1;
     }
+
+    private void drawBarChart(ArrayList<BarEntry> yVals, int year) {
+        BarDataSet set1;
+        if (barChart.getData() != null &&
+                barChart.getData().getDataSetCount() > 0) {
+            set1 = (BarDataSet) barChart.getData().getDataSetByIndex(0);
+            set1.setValues(yVals);
+            barChart.getData().notifyDataChanged();
+            barChart.notifyDataSetChanged();
+        } else {
+            set1 = new BarDataSet(yVals, "The year "+year);
+
+            set1.setDrawIcons(true);
+            //set1.setStackLabels(mMonths);
+            set1.setColors(ColorTemplate.MATERIAL_COLORS);
+
+            ArrayList<IBarDataSet> dataSets = new ArrayList<IBarDataSet>();
+            dataSets.add(set1);
+
+            BarData barData = new BarData(dataSets);
+
+            barData.setValueTextSize(10f);
+
+            barData.setBarWidth(0.9f);
+
+            Description description1 = new Description();
+            description1.setText("spending per month");
+            barChart.setDescription(description1);
+            XAxis xAxis = barChart.getXAxis();
+            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+
+            barChart.setData(barData);
+        }
+        barChart.invalidate();
+    }
+
 
     @Override
     public void onClick(View view){
@@ -374,7 +510,7 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
                 break;
             case R.id.bt_settleUp:
 
-                settleThedebt();
+                settleTheDebt();
                 break;
             case R.id.iv_balance_back:
                 Intent result = new Intent();
@@ -390,7 +526,7 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
         }
     }
 
-    private void settleThedebt() {
+    private void settleTheDebt() {
         new AlertDialog.Builder(this)
                 .setTitle("Settle the debt")
                 .setMessage("Balance will be reset to 0, are you want settle the debt?")
