@@ -189,6 +189,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                                             public void onComplete(@NonNull Task<Void> task) {
                                                 // user is now signed out
                                                 showSnackbar("signed out");
+                                                MainActivity.this.finish();
                                             }
                                         });
 

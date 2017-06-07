@@ -46,6 +46,26 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             } else {
                 // Handle message within 10 seconds
                 // a expense was added
+                /////
+                if(remoteMessage.getData().get("createdBy").matches(user.getUid())){
+                    if(remoteMessage.getData().get("actionType").matches("newExpense")){
+                        String groupKey = remoteMessage.getData().get("groupId");
+                        String groupName = remoteMessage.getData().get("groupName");
+                        String createdBy = remoteMessage.getData().get("creatorName");
+                        String messageBody = "(debug model, creator receive notifications)a new expense created by " + createdBy +"(group: " + groupName+")";
+                        String messageTitle = "new expense";
+                        sendNotification(messageTitle, messageBody, groupKey );
+                    }else if(remoteMessage.getData().get("actionType").matches("deleteExpense")){
+                        String groupKey = remoteMessage.getData().get("groupId");
+                        String groupName = remoteMessage.getData().get("groupName");
+                        String createdBy = remoteMessage.getData().get("creatorName");
+                        String messageBody = "(debug model, creator receive notifications)a expense deleted by " + createdBy +"(group: " + groupName+")";
+                        String messageTitle = "a expense";
+                        sendNotification(messageTitle, messageBody, groupKey );
+                    }
+
+                }else
+                    /////
                 if(remoteMessage.getData().get("actionType").matches("newExpense")){
                     String groupKey = remoteMessage.getData().get("groupId");
                     String groupName = remoteMessage.getData().get("groupName");

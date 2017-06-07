@@ -162,7 +162,6 @@ public class MainFragment extends Fragment {
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
 
-
         mDatabaseRef  = FirebaseDatabase.getInstance().getReference();
 
         mDatabaseRef.child("groups").child(group_key).child("members").addChildEventListener(new ChildEventListener() {
@@ -200,10 +199,7 @@ public class MainFragment extends Fragment {
                 Log.d(TAG,"actionbar = "+actionBar.toString());
                 if(actionBar!=null){
                     actionBar.setTitle(groupName);
-
-
-
-                }
+                 }
 
 
 
@@ -249,6 +245,12 @@ public class MainFragment extends Fragment {
         //get group members
         List<GroupMember> members = new ArrayList<>();
         final GroupMemberViewAdapter groupAdapter = new GroupMemberViewAdapter(members , this.getContext());
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this.getActivity(),LinearLayoutManager.HORIZONTAL,false);
+
+        // groupAdapter.getNames().add("add_new_member");
+
+        rv_members.setLayoutManager(layoutManager);
+        rv_members.setAdapter(groupAdapter);
 
         groupMembersRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -287,12 +289,7 @@ public class MainFragment extends Fragment {
             }
         });
 
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this.getActivity(),LinearLayoutManager.HORIZONTAL,false);
-        
-       // groupAdapter.getNames().add("add_new_member");
 
-        rv_members.setLayoutManager(layoutManager);
-        rv_members.setAdapter(groupAdapter);
 
         add_expense.setOnClickListener(new View.OnClickListener() {
             @Override
