@@ -10,7 +10,9 @@ import android.net.Uri;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -91,6 +93,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     private String userName = "login/register";
     private String userAddress = "XXX@XXXXX.XX";
     private Toolbar toolbar;
+    private MainFragment mainFragment;
     //private Uri photoUrl;
     //private String UID = "";
 
@@ -183,13 +186,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                             if(mAuth.getCurrentUser()!=null) {
                                 mRootRef.child("users").child(mAuth.getCurrentUser().getUid()).child("deviceTokens")
                                         .child(deviceToken).setValue(false);
+
                                 AuthUI.getInstance()
                                         .signOut(MainActivity.this)
                                         .addOnCompleteListener(new OnCompleteListener<Void>() {
                                             public void onComplete(@NonNull Task<Void> task) {
                                                 // user is now signed out
                                                 showSnackbar("signed out");
-                                                MainActivity.this.finish();
+
+                                                FragmentManager fm = getSupportFragmentManager();
+                                                FragmentTransaction ft = fm.beginTransaction();
+                                                ft.remove(fm.findFragmentById(R.id.main_content));
+                                                ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
+                                                ft.commit();
+
                                             }
                                         });
 
@@ -242,7 +252,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                             Bundle bundle = new Bundle();
                             bundle.putString("group_key", group_key);
 
-                            MainFragment mainFragment = new MainFragment();
+                            mainFragment = new MainFragment();
                             FragmentManager manager = getSupportFragmentManager();
 
                             mainFragment.setArguments(bundle);
