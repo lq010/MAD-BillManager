@@ -2,6 +2,7 @@ package com.mobile.madassignment;
 
 import android.content.DialogInterface;
 import android.graphics.Color;
+import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputEditText;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AlertDialog;
@@ -21,23 +22,36 @@ import android.widget.TextView;
 
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigation;
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigationItem;
+import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageException;
+import com.google.firebase.storage.StorageReference;
 import com.mobile.madassignment.Adapter.BalanceListViewAdapter;
 import com.mobile.madassignment.R;
 import com.mobile.madassignment.models.Expense;
 import com.mobile.madassignment.models.Group;
 import com.mobile.madassignment.models.GroupMember;
+import com.mobile.madassignment.models.UserInfo;
 import com.mobile.madassignment.util.DataFormat;
+import com.squareup.picasso.Picasso;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.mobile.madassignment.util.Constants.Node_userInfo;
 
 public class ExpenseDetailActivity extends AppCompatActivity {
     private final String TAG = this.getClass().getSimpleName();
@@ -121,12 +135,42 @@ public class ExpenseDetailActivity extends AppCompatActivity {
         Log.d(TAG,expense.getId()+"<"+expense.getPayer()+">");
         mDatabase = FirebaseDatabase.getInstance().getReference();
         mAuth = FirebaseAuth.getInstance();
-        mDatabase.child("users").child(expense.getPayer()).child("name")
+        mDatabase.child("users").child(expense.getPayer()).child(Node_userInfo)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        tv_payer_name.setText(dataSnapshot.getValue().toString());
+                        UserInfo userInfo = dataSnapshot.getValue(UserInfo.class);
+                        tv_payer_name.setText(userInfo.getName());
                         tv_total_payed.setText(expense.getCost()+"");
+                        Log.d("userInfo.isPhotoExist()",userInfo.isPhotoExist()+"");
+                        Log.d("userInfo.isPhotoExist()",userInfo.getProfilePhoto()+"");
+                        if(userInfo.isPhotoExist()){
+                            FirebaseStorage storage = FirebaseStorage.getInstance();
+                            StorageReference storageRef = storage.getReferenceFromUrl("gs://madassignment-1f6c6.appspot.com");
+                            StorageReference photoRef = storageRef.child(userInfo.getProfilePhoto() + ".jpg");
+                            try {
+                                final File localFile = File.createTempFile("images", "jpg");
+                                final long ONE_MEGABYTE = 1024 * 1024;
+                                photoRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                                    @Override
+                                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                                        // Local temp file has been created
+
+                                        Picasso.with(ExpenseDetailActivity.this).load(localFile).into(iv_payer_userPhoto);
+                                    }
+                                }).addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception exception) {
+                                        Picasso.with(ExpenseDetailActivity.this).load(R.drawable.profile).into(iv_payer_userPhoto);
+                                    }
+                                });
+                            } catch (IOException e) {
+                                Log.d("userPhoto", e.getMessage());
+                            }
+
+                        }else {
+                            Picasso.with(ExpenseDetailActivity.this).load(R.drawable.profile).into(iv_payer_userPhoto);
+                        }
                     }
 
                     @Override
@@ -135,21 +179,39 @@ public class ExpenseDetailActivity extends AppCompatActivity {
                     }
                 });
 
-        Map<String, String > participants = expense.getParticipants();
+        final Map<String, String > participants = expense.getParticipants();
         int num_participants =  participants.size();
-        float avg_cost = expense.getCost()/num_participants;
+        final float avg_cost = expense.getCost()/num_participants;
         final List<GroupMember> members = new ArrayList<>();
-        for(String uid : participants.keySet()){
+        for(final String uid :  participants.keySet()){
             Log.d(TAG,"uid "+uid+",name "+participants.get(uid));
-            GroupMember member = new GroupMember();
-            member.setName(participants.get(uid));
-            member.setBalance(0-avg_cost);
-            members.add(member);
+            mDatabase.child("users").child(uid).child(Node_userInfo).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+
+                    UserInfo userInfo = dataSnapshot.getValue(UserInfo.class);
+                    GroupMember groupMember = new GroupMember(userInfo);
+                    Log.d("mmmmm", "user..."+groupMember.getName()+ " id: "+groupMember.getId());
+
+                    groupMember.setName(participants.get(uid));
+                    groupMember.setBalance(0-avg_cost);
+                    members.add(groupMember);
+
+                    balanceListViewAdapter.notifyDataSetChanged();
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+
         }
 
         balanceListViewAdapter = new BalanceListViewAdapter(members,ExpenseDetailActivity.this);
 
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this,LinearLayoutManager.VERTICAL,false);
+        layoutManager.requestSimpleAnimationsInNextLayout();
         rv_participants.setLayoutManager(layoutManager);
         rv_participants.setAdapter(balanceListViewAdapter);
 

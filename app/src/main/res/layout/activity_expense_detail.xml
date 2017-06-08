@@ -176,7 +176,7 @@
                         android:padding="5dp">
 
 
-                        <com.mikepenz.materialdrawer.view.BezelImageView
+                        <de.hdodenhof.circleimageview.CircleImageView
                             android:id="@+id/iv_payer_userPhoto"
                             android:layout_width="41dp"
                             android:layout_height="41dp"
@@ -371,7 +371,7 @@
                         app:layout_constraintVertical_bias="1.0"
                         android:layout_marginStart="29dp" />
                     <TextView
-
+android:visibility="gone"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textSize="18sp"
@@ -383,7 +383,7 @@
                         android:layout_marginLeft="8dp"
                         android:layout_marginTop="7dp" />
                     <TextView
-
+android:visibility="gone"
                         android:id="@+id/tv_reason"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

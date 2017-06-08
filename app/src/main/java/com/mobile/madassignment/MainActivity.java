@@ -63,6 +63,7 @@ import com.mikepenz.materialdrawer.model.ProfileSettingDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 import com.mikepenz.materialdrawer.model.interfaces.Nameable;
+import com.mobile.madassignment.models.UserInfo;
 import com.squareup.picasso.Picasso;
 
 
@@ -71,6 +72,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.mobile.madassignment.util.Constants.Default_Photo;
+import static com.mobile.madassignment.util.Constants.Node_userInfo;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener{
 
@@ -120,12 +124,34 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
+                final FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     // User is signed in
-                    String deviceToken = FirebaseInstanceId.getInstance().getToken();
-                    mRootRef.child("users").child(user.getUid()).child("deviceTokens")
-                            .child(deviceToken).setValue(true);
+
+                    mRootRef.child("users").child(user.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            boolean init = true;
+                            for (DataSnapshot data :dataSnapshot.getChildren()){
+                                if (data.getKey().matches(Node_userInfo))
+                                    init = false;
+                            }
+                            if(init){
+                                String deviceToken = FirebaseInstanceId.getInstance().getToken();
+                                mRootRef.child("users").child(user.getUid()).child("deviceTokens")
+                                        .child(deviceToken).setValue(true);
+                                String userPhoto = Default_Photo;
+                                UserInfo userInfo = new  UserInfo(user.getUid(),user.getDisplayName(),user.getEmail(),userPhoto) ;
+                                mRootRef.child("users").child(user.getUid()).child(Node_userInfo).setValue(userInfo);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+
                     Log.v( "starting fragment", "onAuthStateChanged:signed_in:" + user.getUid());
 
                     if(!isGroupDrawerInited){
@@ -193,12 +219,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                                             public void onComplete(@NonNull Task<Void> task) {
                                                 // user is now signed out
                                                 showSnackbar("signed out");
-
+                                                try{
                                                 FragmentManager fm = getSupportFragmentManager();
                                                 FragmentTransaction ft = fm.beginTransaction();
                                                 ft.remove(fm.findFragmentById(R.id.main_content));
                                                 ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
-                                                ft.commit();
+                                                ft.commit();}
+                                                catch (NullPointerException e){
+
+                                                }
 
                                             }
                                         });

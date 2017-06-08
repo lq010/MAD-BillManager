@@ -51,10 +51,11 @@ public class GroupMemberViewAdapter extends RecyclerView.Adapter<GroupMemberView
         GroupMember user = users.get(position);
         holder.name.setText(user.getName());
         if(user.isPhotoExist()){
-            Log.d(this.getClass().getName(),user.getPhotoFile());
+            Log.d(this.getClass().getName(),user.getProfilePhoto());
             FirebaseStorage storage = FirebaseStorage.getInstance();
             StorageReference storageRef = storage.getReferenceFromUrl("gs://madassignment-1f6c6.appspot.com");
-            StorageReference photoRef = storageRef.child(user.getPhotoFile()+".jpg");
+            StorageReference photoRef = storageRef.child(user.getProfilePhoto()+".jpg");
+            Log.d("profile", user.getProfilePhoto());///
             try {
                 final File localFile = File.createTempFile("images", "jpg");
                 final long ONE_MEGABYTE = 1024*1024;

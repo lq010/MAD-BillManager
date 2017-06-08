@@ -67,10 +67,14 @@ import com.mobile.madassignment.models.Expense;
 import com.mobile.madassignment.models.Group;
 import com.mobile.madassignment.models.GroupMember;
 import com.mobile.madassignment.models.UpdateExpenseListEvent;
+import com.mobile.madassignment.models.UpdatebalanceListEvent;
+import com.mobile.madassignment.models.UserInfo;
 import com.mobile.madassignment.util.BarChartItemMarker;
 import com.mobile.madassignment.util.DayAxisValueFormatter;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
 
@@ -82,6 +86,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.mobile.madassignment.util.Constants.Node_userInfo;
 
 public class BalanceActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -256,63 +262,75 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
         mFirebaseRef  = FirebaseDatabase.getInstance().getReference();
         DatabaseReference groupMembersRef = mFirebaseRef.child("groups").child(group_key).child("members");
         //get group members
-        groupMembersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+//        groupMembersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//
+//                total_members = (int)dataSnapshot.getChildrenCount();
+//
+//                for(DataSnapshot data :dataSnapshot.getChildren()){
+//                    GroupMember member = new GroupMember();
+//                    member.setName(data.getValue().toString());
+//                    memberMap.put(data.getKey(),member);
+//                }
+//            }
+//        @Override
+//        public void onCancelled(DatabaseError databaseError) {
+//            //TODO fail
+//        }
+//    });
+        final DatabaseReference userRef = mFirebaseRef.child("users");
+        final List<GroupMember> members = new ArrayList<>();
+
+        balanceListViewAdapter = new BalanceListViewAdapter(members,BalanceActivity.this);
+        rv_balance_list.setAdapter(balanceListViewAdapter);
+        groupMembersRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-
                 total_members = (int)dataSnapshot.getChildrenCount();
+                for(final DataSnapshot data: dataSnapshot.getChildren()){
+                    String userId = data.getKey();
 
-                for(DataSnapshot data :dataSnapshot.getChildren()){
-                    GroupMember member = new GroupMember();
-                    member.setName(data.getValue().toString());
-                    memberMap.put(data.getKey(),member);
+                    userRef.child(userId).child(Node_userInfo).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+
+                            UserInfo userInfo = dataSnapshot.getValue(UserInfo.class);
+                            GroupMember groupMember = new GroupMember(userInfo);
+                            Log.d("mmmmm", "user..."+groupMember.getName()+ " id: "+groupMember.getId());
+
+                            memberMap.put(groupMember.getId(),groupMember);
+
+                            members.add(groupMember);
+                            balanceListViewAdapter.notifyDataSetChanged();
+                            for(String key :memberMap.keySet())//TODO
+                                Log.v("debug1", key);
+                            //balance list
+                            if(memberMap.size()== total_members)
+                                EventBus.getDefault().post(new UpdatebalanceListEvent("notimportant"));
+
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+
                 }
+
+
+
+
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                //TODO fail
+
             }
         });
 
-        //balance list
-        final List<GroupMember> members = new ArrayList<>();
-        balanceListViewAdapter = new BalanceListViewAdapter(members,BalanceActivity.this);
-        rv_balance_list.setAdapter(balanceListViewAdapter);
 
-        mFirebaseRef.child("balances").child(group_key).orderByChild("settledUp").equalTo(false)
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        //Log.d("balances",dataSnapshot.getChildren().toString());
-                        for(DataSnapshot data : dataSnapshot.getChildren()){
-                            Log.d("balances",data.getKey().toString());
-                            newestBalanceKey = data.getKey().toString();
-                            for(DataSnapshot balance : data.child("balance").getChildren()){
-
-                                if(memberMap.containsKey(balance.getKey())){
-                                    Log.v("balanceyyy", balance.child("balance").getValue().toString());
-                                    memberMap.get(balance.getKey()).setBalance(Float.parseFloat(balance.child("balance").getValue().toString()));
-                                }else{
-                                    //TODO
-                                }
-                            }
-
-                        }
-                        for(GroupMember member: memberMap.values()){
-                            if(!members.contains(member))
-                                 members.add(member);
-                        }
-
-                        balanceListViewAdapter.notifyDataSetChanged();
-
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });
 
         /*[balance list end]*/
         /*[chart data]*/
@@ -430,7 +448,8 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
 
                             }
                         });
-                        drawBarChart(year_barEntryMap.get(CurrentYear),CurrentYear);
+                        if(year_barEntryMap.containsKey(CurrentYear))
+                            drawBarChart(year_barEntryMap.get(CurrentYear),CurrentYear);
 
                     }
 
@@ -571,4 +590,65 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
         }
         return false;
     }
+    @Override
+    public void onStart() {
+        super.onStart();
+        Log.v("event","event bus start");
+        EventBus.getDefault().register(BalanceActivity.this);
+
+    }
+
+    @Override
+    public void onStop() {
+        EventBus.getDefault().unregister(BalanceActivity.this);
+        super.onStop();
+    }
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(UpdatebalanceListEvent event) {
+        String balanceId = event.balanceId;
+        Log.d("eventttt",balanceId);
+        try {
+            updateBalance(balanceId);
+        }catch (IllegalArgumentException e){
+            //if expenseNUm == 0
+            Log.d("query Error",e.getMessage());
+        }
+    }
+
+    private void updateBalance(String balanceId) {
+
+        mFirebaseRef.child("balances").child(group_key).orderByChild("settledUp").equalTo(false)
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        //Log.d("balances",dataSnapshot.getChildren().toString());
+                        for(DataSnapshot data : dataSnapshot.getChildren()){
+                            Log.d("balances",data.getKey().toString());
+                            newestBalanceKey = data.getKey().toString();
+                            for(DataSnapshot balance : data.child("balance").getChildren()){
+                                for(String key :memberMap.keySet())//TODO
+                                    Log.v("debug", key);
+                                if(memberMap.containsKey(balance.getKey())){
+                                    Log.v("balanceyyy", balance.child("balance").getValue().toString());
+                                    memberMap.get(balance.getKey()).setBalance(Float.parseFloat(balance.child("balance").getValue().toString()));
+                                }else{
+                                    Log.v("balancennn", balance.child("balance").getValue().toString());
+                                }
+                            }
+
+                        }
+
+                        balanceListViewAdapter.notifyDataSetChanged();
+
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+    }
+
+
+
 }

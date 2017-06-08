@@ -2,26 +2,26 @@ package com.mobile.madassignment.models;
 
 import java.text.DecimalFormat;
 
+import static com.mobile.madassignment.util.Constants.Default_Photo;
+
 /**
  * Created by lq on 13/04/2017.
  */
 
-public class GroupMember {
+public class GroupMember extends UserInfo{
 
-    private String name;
     private float spending;
     private float payed;
     private float balance;
-    private  String photoFile;
+    boolean isParticipant;
 
-
-    public GroupMember() {
-        this.spending = 0;
-        this.payed = 0;
-        this.balance = 0;
+    public GroupMember(UserInfo userInfo) {
+        super(userInfo.getId(), userInfo.getName(), userInfo.getEmail(), userInfo.getProfilePhoto());
     }
 
+    public GroupMember(){
 
+    }
     public String getName() {
         return name;
     }
@@ -54,22 +54,25 @@ public class GroupMember {
         this.balance = balance;
     }
 
+    public boolean isParticipant() {
+        return isParticipant;
+    }
+
+    public void setParticipant(boolean participant) {
+        isParticipant = participant;
+    }
+
     public void reset(){
         this.spending = 0;
         this.payed = 0;
         this.balance = 0;
     }
 
-    public String getPhotoFile() {
-        return photoFile;
-    }
 
-    public void setPhotoFile(String photoURL) {
-        this.photoFile = photoURL;
-    }
+
 
     public boolean isPhotoExist(){
-        if(photoFile!=null)
+        if(!super.getProfilePhoto().matches(Default_Photo))
             return true;
         else
             return  false;

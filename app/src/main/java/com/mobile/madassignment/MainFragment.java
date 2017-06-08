@@ -44,6 +44,7 @@ import com.mobile.madassignment.Adapter.ExpenseViewHolder;
 import com.mobile.madassignment.Adapter.GroupMemberViewAdapter;
 import com.mobile.madassignment.models.Expense;
 import com.mobile.madassignment.models.GroupMember;
+import com.mobile.madassignment.models.UserInfo;
 import com.mobile.madassignment.util.DataFormat;
 import com.mobile.madassignment.models.UpdateExpenseListEvent;
 import com.mobile.madassignment.util.SimpleDividerItemDecoration;
@@ -56,6 +57,8 @@ import java.util.ArrayList;
 
 import java.util.HashMap;
 import java.util.List;
+
+import static com.mobile.madassignment.util.Constants.Node_userInfo;
 
 
 public class MainFragment extends Fragment {
@@ -173,7 +176,7 @@ public class MainFragment extends Fragment {
 
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
+                userId_nameMap.put(dataSnapshot.getKey(),dataSnapshot.getValue().toString());
             }
 
             @Override
@@ -200,8 +203,6 @@ public class MainFragment extends Fragment {
                 if(actionBar!=null){
                     actionBar.setTitle(groupName);
                  }
-
-
 
                 currency = dataSnapshot.child("currency").getValue().toString();
                 tv_currency_name.setText(currency);
@@ -258,19 +259,16 @@ public class MainFragment extends Fragment {
                 numOfmembers = (int)dataSnapshot.getChildrenCount();
                 for(final DataSnapshot data: dataSnapshot.getChildren()){
                     String userId = data.getKey();
-                    String userName = data.getValue().toString();
-                    Log.v("test key",userId);
-                    userRef.child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+
+                    userRef.child(userId).child(Node_userInfo).addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
-                            GroupMember user = new GroupMember();
-                            user.setName(dataSnapshot.child("name").getValue().toString());
-                            if (dataSnapshot.child("photoFile").exists()){
-                                user.setPhotoFile(dataSnapshot.child("photoFile").getValue().toString());
-                            }
 
-                            Log.d(TAG, "user..."+user.getName()+user.getPhotoFile());
-                            groupAdapter.getusers().add(user);
+                            UserInfo userInfo = dataSnapshot.getValue(UserInfo.class);
+                            GroupMember groupMember = new GroupMember(userInfo);
+
+                            Log.d(TAG, "user..."+groupMember.getName()+ " id: "+groupMember.getId());
+                            groupAdapter.getusers().add(groupMember);
                         }
 
                         @Override
@@ -281,6 +279,7 @@ public class MainFragment extends Fragment {
 
                 }
                 groupAdapter.notifyDataSetChanged();
+                rv_members.setAdapter(groupAdapter);
             }
 
             @Override
@@ -362,24 +361,26 @@ public class MainFragment extends Fragment {
                 showMessage(getString(R.string.send_failed));
                 // [END_EXCLUDE]
             }
-        }else if(requestCode == REQUEST_BALANCE){
-            if(resultCode == Activity.RESULT_OK){
-                Log.d("result_activitey","requestCode="+requestCode+", resultCOde= OK");
-                me.reset();
-                totalSpending = 0;
-                my_balance = 0;
-                MainFragment currentFragment = this;
-                FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
-                fragTransaction.detach(currentFragment);
-                fragTransaction.attach(currentFragment);
-                fragTransaction.commit();
-
-
-            }else if(resultCode == Activity.RESULT_CANCELED){
-
-                Log.d("result_activitey","requestCode="+requestCode+", resultCOde= canceled");
-            }
         }
+//        else if(requestCode == REQUEST_BALANCE){
+//            if(resultCode == Activity.RESULT_OK){
+//                Log.d("result_activitey","requestCode="+requestCode+", resultCOde= OK");
+//                me.reset();
+//                totalSpending = 0;
+//                my_balance = 0;
+//                MainFragment currentFragment = this;
+//                FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
+//                fragTransaction.detach(currentFragment);
+//                fragTransaction.attach(currentFragment);
+//                fragTransaction.commit();
+//
+//
+//            }
+//            else if(resultCode == Activity.RESULT_CANCELED){
+//
+//                Log.d("result_activitey","requestCode="+requestCode+", resultCOde= canceled");
+//            }
+//        }
     }
     // [END on_activity_result]
 
@@ -408,15 +409,13 @@ public class MainFragment extends Fragment {
                 tv_balence_value.setText(DataFormat.myDFloatFormat(my_balance));
                 if (my_balance < 0) {
                     Log.d("Mybalance",my_balance+"");
-                    tv_owenORowendText.setText("you owen");
+                    tv_owenORowendText.setText("you owne");
                     tv_owenORowendText.setBackgroundColor(Color.RED);
                 }
 
                 tv_mySpending.setText(DataFormat.myDFloatFormat(my_spending));
                 tv_totalSpending.setText(DataFormat.myDFloatFormat(total_spending));
-
-
-            }
+         }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
@@ -491,36 +490,7 @@ public class MainFragment extends Fragment {
                    viewHolder.deleteMark_line.setVisibility(View.VISIBLE);
                }
 
-//                if(!expenseKeys.contains(expense.getId())){
-//
-//                    totalSpending += expense.getCost();
-//
-//                    if(expense.getParticipants().containsKey(user.getUid())){
-//                        if (expense.getPayer().matches(user.getUid())) {
-//                            me.setPayed(me.getPayed() + expense.getCost());
-//                        }
-//                        float avgSpending = expense.getCost() / expense.getParticipants().size();
-//                        me.setSpending(me.getSpending()+avgSpending);
-//                        me.setBalance(me.getPayed()-me.getSpending());
-//                    }
-//                    Log.d("payerId", expense.getPayer());
-//                    Log.d("me_payed", me.getPayed() + "");
-//                    Log.d("me_spending", me.getSpending() + "");
-//                    Log.d("totalSpending ", totalSpending + "");
-//                    Log.d("participants ", expense.getParticipants().size() + "");
-//                    Log.d("mySpending ", me.getSpending() + "");
-//
-//                    tv_balence_value.setText(DataFormat.myDFloatFormat(me.getBalance()));
-//                    if (me.getBalance() < 0) {
-//                        Log.d("Mybalance",me.getBalance()+"");
-//                        tv_owenORowendText.setText("you owen");
-//                        tv_owenORowendText.setBackgroundColor(Color.RED);
-//                    }
-//
-//                    tv_mySpending.setText(DataFormat.myDFloatFormat(me.getSpending()));
-//                    tv_totalSpending.setText(DataFormat.myDFloatFormat(totalSpending));
-//                    expenseKeys.add(expense.getId());
-//                }
+
 
             }
         };
