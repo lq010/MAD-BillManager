@@ -68,4 +68,9 @@
     <string name="profile">Profile</string>
     <string name="expense_detail">Expense detail</string>
     <string name="exit_group">exit group</string>
+
+
+    <string name="takephoto">Take a Photo</string>
+    <string name="choosephoto">Choose from Photos</string>
+    <string name="cancel">Cancel</string>
 </resources>

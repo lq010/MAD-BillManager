@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     android:background="#FFFFFF"
     android:orientation="vertical"
+    android:id="@+id/main_layout"
     tools:context="com.mobile.madassignment.AddNewExpenseActivity">
     <RelativeLayout
         android:layout_width="match_parent"
@@ -49,169 +50,189 @@
             android:padding="5dp"
             android:src="@mipmap/c_c38" />
     </RelativeLayout>
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center">
 
     <EditText
         android:id="@+id/ed_new_description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"
+        android:layout_marginLeft="50dp"
+        android:layout_marginRight="3dp"
         android:layout_marginTop="10dp"
         android:hint="Description..." />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:background="#FFFFFF"
-        android:gravity="center"
-        android:orientation="horizontal">
+    <ImageView
+        android:id="@+id/add_expense_photo"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginRight="40dp"
 
-        <TextView
-            android:layout_gravity="center_vertical"
-            android:padding="5dp"
-            android:gravity="center_vertical|end"
-            android:text="0"
-            android:textStyle="bold"
-            android:id="@+id/tv_input_result"
-            android:layout_width="0dp"
+        android:src="@drawable/ic_add_a_photo_black_24dp"/>
+</LinearLayout>
+
+
+
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:background="#FFFFFF"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_gravity="center_vertical"
+                android:padding="5dp"
+                android:gravity="center_vertical|end"
+                android:text="0"
+                android:textStyle="bold"
+                android:id="@+id/tv_input_result"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@mipmap/c_c01"
+                android:textSize="20sp" />
+
+            <ImageView
+                android:id="@+id/iv_input_delete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@mipmap/c_c02" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@mipmap/c_c01"
-            android:textSize="20sp" />
+            android:background="#F4f4f4"
+            android:gravity="center"
+            android:orientation="horizontal">
 
-        <ImageView
-            android:id="@+id/iv_input_delete"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@mipmap/c_c02" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="#F4f4f4"
-        android:gravity="center"
-        android:orientation="horizontal">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <ImageView
-                android:id="@+id/iv_input_iv7"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:src="@mipmap/c_c10" />
+                android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/iv_input_iv4"
+                <ImageView
+                    android:id="@+id/iv_input_iv7"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:src="@mipmap/c_c10" />
+
+                <ImageView
+                    android:id="@+id/iv_input_iv4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:src="@mipmap/c_c07" />
+
+                <ImageView
+                    android:id="@+id/iv_input_iv1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:src="@mipmap/c_c04" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:src="@mipmap/c_c07" />
+                android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/iv_input_iv1"
+                <ImageView
+                    android:id="@+id/iv_input_iv8"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@color/black"
+                    android:src="@mipmap/c_c11" />
+
+                <ImageView
+                    android:id="@+id/iv_input_iv5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:src="@mipmap/c_c08" />
+
+                <ImageView
+                    android:id="@+id/iv_input_iv2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:src="@mipmap/c_c05" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:src="@mipmap/c_c04" />
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/iv_input_iv9"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:src="@mipmap/c_c12" />
+
+                <ImageView
+                    android:id="@+id/iv_input_iv6"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:src="@mipmap/c_c09" />
+
+                <ImageView
+                    android:id="@+id/iv_input_iv3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:src="@mipmap/c_c06" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/iv_input_add"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:src="@mipmap/c_c30" />
+
+                <ImageView
+                    android:id="@+id/iv_input_point"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:src="@mipmap/c_c32" />
+
+                <ImageView
+                    android:id="@+id/iv_input_iv0"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:src="@mipmap/c_c31" />
+
+                <ImageView
+                    android:id="@+id/iv_input_ok"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:src="@mipmap/c_c33" />
+            </LinearLayout>
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/iv_input_iv8"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@color/black"
-                android:src="@mipmap/c_c11" />
-
-            <ImageView
-                android:id="@+id/iv_input_iv5"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:src="@mipmap/c_c08" />
-
-            <ImageView
-                android:id="@+id/iv_input_iv2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:src="@mipmap/c_c05" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <ImageView
-                android:id="@+id/iv_input_iv9"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:src="@mipmap/c_c12" />
-
-            <ImageView
-                android:id="@+id/iv_input_iv6"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:src="@mipmap/c_c09" />
-
-            <ImageView
-                android:id="@+id/iv_input_iv3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:src="@mipmap/c_c06" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <ImageView
-                android:id="@+id/iv_input_add"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:src="@mipmap/c_c30" />
-
-            <ImageView
-                android:id="@+id/iv_input_point"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:src="@mipmap/c_c32" />
-
-            <ImageView
-                android:id="@+id/iv_input_iv0"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:src="@mipmap/c_c31" />
-
-            <ImageView
-                android:id="@+id/iv_input_ok"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:src="@mipmap/c_c33" />
-        </LinearLayout>
-    </LinearLayout>
 
 </LinearLayout>

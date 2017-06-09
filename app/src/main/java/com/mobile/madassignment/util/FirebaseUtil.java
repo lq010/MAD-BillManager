@@ -1,6 +1,8 @@
 package com.mobile.madassignment.util;
 
 import android.content.Context;
+import android.net.Uri;
+import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 import com.google.firebase.database.FirebaseDatabase;
@@ -35,5 +37,8 @@ public class FirebaseUtil {
                         .child(userProfile))
                 .into(cv);
     }
+    public static void square_image(final Context c, final ImageView i, Uri p){
+        Glide.with(c).load(p).asBitmap().centerCrop().into(i);
 
+    }
 }

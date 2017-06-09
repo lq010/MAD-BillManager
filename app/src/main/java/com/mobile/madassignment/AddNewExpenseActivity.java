@@ -1,9 +1,30 @@
 package com.mobile.madassignment;
 
 
+import android.*;
+import android.Manifest;
+import android.app.ProgressDialog;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.os.Parcelable;
+import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
@@ -13,18 +34,30 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.utils.Utils;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.mobile.madassignment.Adapter.ExpenseTypeAdapter;
 import com.mobile.madassignment.Adapter.ExpenseTypeViewPagerAdapter;
 import com.mobile.madassignment.models.Expense;
 import com.mobile.madassignment.models.ExpenseType;
 import com.mobile.madassignment.util.DataFormat;
+import com.mobile.madassignment.util.SelectPicPopupWindow;
 import com.mobile.madassignment.view.NoScrollGridView;
 
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -34,14 +67,26 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.mobile.madassignment.util.FirebaseUtil.square_image;
+
 public class AddNewExpenseActivity extends AppCompatActivity implements View.OnTouchListener {
     private ImageView ivNewExpenseBack;
     private ViewPager vpNewExpense;
     private ImageView ivNewExpenseState;//page
     private EditText  description;
     private TextView tvInputResult;
-
+    private Uri outputFileUri;
+    private ImageView addExpensePhoto;
+    private Uri imageUrl;
+    private Boolean ImageC=false;
+    private Boolean cam;
+    private boolean hasPic = false;
+    private ProgressDialog progressDialog;
     private DatabaseReference mDatebaseRef;
+    private static final int REQUESTCODE_PICK = 0;
+    private static final int REQUESTCODE_TAKE = 1;
+//    private static final int REQUESTCODE_CUTTING = 2;
+    private SelectPicPopupWindow menuWindow;
 
     private ImageView ivInputIv0;
     private ImageView ivInputIv1;
@@ -59,7 +104,7 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnT
     private ImageView ivInputOk;
 
     private ImageView ivInputAdd;
-
+    private static final String IMAGE_FILE_NAME = "expense.jpg";
     private String group_key;
     private HashMap<String, String> participants;
     private FirebaseUser user;
@@ -96,7 +141,7 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnT
         ivInputDelete = (ImageView) findViewById(R.id.iv_input_delete);
         ivNewExpenseBack = (ImageView) findViewById(R.id.iv_new_record_back);
         tvInputResult = (TextView) findViewById(R.id.tv_input_result);
-
+        addExpensePhoto = (ImageView)findViewById(R.id.add_expense_photo);
         description = (EditText) findViewById(R.id.ed_new_description);
 
         ivNewExpenseState = (ImageView) findViewById(R.id.iv_new_record_state);
@@ -107,10 +152,72 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnT
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
 
+        addExpensePhoto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                menuWindow = new SelectPicPopupWindow(AddNewExpenseActivity.this, itemsOnClick);
+                menuWindow.showAtLocation(findViewById(R.id.main_layout),
+                        Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL, 0, 0);
+            }
+        });
+
+
     }
 
 
+    private View.OnClickListener itemsOnClick = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            menuWindow.dismiss();
+            switch (v.getId()) {
+                // take photos
+                case R.id.takePhotoBtn:
+                    Intent takeIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    //
+                    takeIntent.putExtra(MediaStore.EXTRA_OUTPUT,
+                            Uri.fromFile(new File(Environment.getExternalStorageDirectory(), IMAGE_FILE_NAME)));
+                    startActivityForResult(takeIntent, REQUESTCODE_TAKE);
+                    break;
+                // choose photos
+                case R.id.pickPhotoBtn:
+                    Intent pickIntent = new Intent(Intent.ACTION_PICK, null);
+                    // image/jpeg 、 image/png...
+                    pickIntent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+                    startActivityForResult(pickIntent, REQUESTCODE_PICK);
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
 
+    //    public static List<Intent> require_image(Uri outputFileUri,PackageManager p) {
+//
+//        final List<Intent> cameraIntents = new ArrayList<Intent>();
+//        Intent pickIntent = new Intent(Intent.ACTION_PICK,
+//                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//        final List<ResolveInfo> Im =p.queryIntentActivities(pickIntent, 0);
+//        for(ResolveInfo res : Im) {
+//            final String packageName = res.activityInfo.packageName;
+//            final Intent intent = new Intent(pickIntent);
+//            intent.setComponent(new ComponentName(packageName, res.activityInfo.name));
+//            intent.setPackage(packageName);
+//            intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+//            cameraIntents.add(intent);
+//        }
+//        final Intent captureIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+//        final List<ResolveInfo> Cam =p.queryIntentActivities(captureIntent, 0);
+//        for(ResolveInfo res : Cam) {
+//            final String packageName = res.activityInfo.packageName;
+//            final Intent intent = new Intent(captureIntent);
+//            intent.setComponent(new ComponentName(packageName, res.activityInfo.name));
+//            intent.setPackage(packageName);
+//            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(Environment.getExternalStorageDirectory(), IMAGE_FILE_NAME)));
+//            cameraIntents.add(intent);
+//        }
+//
+//        return cameraIntents;
+//    }
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
         switch (motionEvent.getAction()){
@@ -253,6 +360,43 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnT
                         newExpense.setParticipants(participants);
                         newExpense.setId(expense_key);
                         //
+                        Log.d("img", hasPic+"");
+                        Log.d("img", imageUrl.toString());
+                        Log.d("img", imageUrl.getPath());
+                        if(hasPic){
+
+
+                            InputStream image_stream = null;
+                            try {
+                                image_stream = getContentResolver().openInputStream(imageUrl);
+                            } catch (FileNotFoundException e) {
+                                e.printStackTrace();
+                            }
+                            Bitmap bitmap= BitmapFactory.decodeStream(image_stream );
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                            byte[] data = baos.toByteArray();
+                            newExpense.setPicture(expense_key+".jpg");
+                            FirebaseStorage storage = FirebaseStorage.getInstance();
+                            StorageReference storageRef = storage.getReferenceFromUrl("gs://madassignment-1f6c6.appspot.com");
+                            StorageReference imagesRef = storageRef.child(group_key).child(newExpense.getPicture());
+
+                            UploadTask uploadTask = imagesRef.putBytes(data);
+                            uploadTask.addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Log.d("img","upload img fail :"+ e.getMessage());
+                                }
+                            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                @Override
+                                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                    Log.d("img","upload sucess");
+                                }
+                            });
+
+
+
+                        }
                         String descriotion = description.getText().toString();
                         if(!descriotion.matches("")){
                             newExpense.setDescription(description.getText().toString());
@@ -388,5 +532,62 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnT
         ivInputOk.setOnTouchListener(this);
         ivNewExpenseBack.setOnTouchListener(this);
     }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            hasPic = true;
+            switch (requestCode) {
+                case REQUESTCODE_PICK:// get pics from album
+                    imageUrl = data.getData();
+                    square_image(getApplicationContext(), addExpensePhoto, imageUrl);
+                    break;
+                case REQUESTCODE_TAKE:// take photos
+                    File temp = new File(Environment.getExternalStorageDirectory() + "/" + IMAGE_FILE_NAME);
+                    imageUrl = Uri.fromFile(temp);
+                    square_image(getApplicationContext(), addExpensePhoto, imageUrl);
+                    break;
 
+            }
+        }
+
+    }
+
+
+
+
+//    public String getRealPathFromURI(Uri contentUri)
+//    {
+//        String[] proj = { MediaStore.Audio.Media.DATA };
+//        Cursor cursor = getContentResolver().query(contentUri, null, null, null, null);
+//        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
+//        cursor.moveToFirst();
+//        return cursor.getString(column_index);
+//    }
+    public  boolean isStoragePermissionGranted() {
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED ) {
+                Log.v("Permission","Permission is granted");
+                return true;
+            } else {
+
+                Log.v("Permission","Permission is revoked");
+                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+                return false;
+            }
+        }
+        else { //permission is automatically granted on sdk<23 upon installation
+            Log.v("Permission","Permission is granted");
+            return true;
+        }
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(grantResults[0]== PackageManager.PERMISSION_GRANTED){
+            Log.v("Permission","Permission: "+permissions[0]+ "was "+grantResults[0]);
+            //resume tasks needing this permission
+        }
+    }
 }

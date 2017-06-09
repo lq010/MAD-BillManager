@@ -21,12 +21,22 @@ public class Expense implements Serializable {
     private Map<String,String> participants;
     private String delete_reason;
 
+    private String picture;
+
     //private Timestamp timestamp;
     private long createTime;
 
     public Expense() {
         this.createTime = new Date().getTime();
         this.status = "valid";
+    }
+
+    public String getPicture() {
+        return picture;
+    }
+
+    public void setPicture(String picture) {
+        this.picture = picture;
     }
 
     public float getCost() {
