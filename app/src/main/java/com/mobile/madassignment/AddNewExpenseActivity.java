@@ -360,9 +360,7 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnT
                         newExpense.setParticipants(participants);
                         newExpense.setId(expense_key);
                         //
-                        Log.d("img", hasPic+"");
-                        Log.d("img", imageUrl.toString());
-                        Log.d("img", imageUrl.getPath());
+
                         if(hasPic){
 
 
