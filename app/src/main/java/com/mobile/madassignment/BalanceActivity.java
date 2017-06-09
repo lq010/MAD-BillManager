@@ -593,13 +593,13 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
     }
 
     private boolean isBalanceNotZero() {
-        for(GroupMember member: memberMap.values()){
-            float balance = member.getBalance();
-            if(balance!=0){
-                return true;
-            }
-        }
-        return false;
+//        for(GroupMember member: memberMap.values()){
+//            float balance = member.getBalance();
+//            if(balance!=0){
+//                return true;
+//            }
+//        }
+        return true;
     }
     @Override
     public void onStart() {
