@@ -109,6 +109,7 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
     private int one;
     private ImageView bt_back;
     private Button bt_settle;
+    private Button bt_all_expenses;
     private RecyclerView rv_balance_list;
     private DatabaseReference mFirebaseRef;
 
@@ -136,7 +137,7 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
         LayoutInflater inflater = getLayoutInflater();
         View view1 = inflater.inflate(R.layout.balance_list, null);
         View view2 = inflater.inflate(R.layout.balance_chart, null);
-
+        bt_all_expenses = (Button)view1.findViewById(R.id.bt_all_expense_and_balance);
         balanceList = (TextView)findViewById(R.id.balance_list);
         balanceChart = (TextView)findViewById(R.id.balance_chart);
         scrollbar = (ImageView)findViewById(R.id.scrollbar);
@@ -162,9 +163,19 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
         LinearLayoutManager layoutManager = new LinearLayoutManager(view1.getContext());
         rv_balance_list.setLayoutManager(layoutManager);
 
-        //
+
         group_key = getIntent().getExtras().getString("group_key");
 
+        bt_all_expenses.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(BalanceActivity.this,AllExpensesActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putString("group_key",group_key);
+                intent.putExtras(bundle);
+                startActivity(intent);
+            }
+        });
         PagerAdapter mPagerAdapter = new PagerAdapter(){
 
             @Override
@@ -648,7 +659,6 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
                     }
                 });
     }
-
 
 
 }

@@ -48,6 +48,7 @@ import com.mobile.madassignment.models.UserInfo;
 import com.mobile.madassignment.util.DataFormat;
 import com.mobile.madassignment.models.UpdateExpenseListEvent;
 import com.mobile.madassignment.util.SimpleDividerItemDecoration;
+import com.mobile.madassignment.util.UserNameMap;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -91,7 +92,7 @@ public class MainFragment extends Fragment {
     private float totalSpending;
     private FirebaseAuth mAuth;
     private FirebaseUser user;
-    private HashMap<String, String> userId_nameMap = new HashMap<>();;
+    private HashMap<String, String> userId_nameMap = UserNameMap.getUserId_nameMap();
     private GroupMember me = new GroupMember();
     private String groupName;
     private String currency;
@@ -198,11 +199,16 @@ public class MainFragment extends Fragment {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                  groupName = dataSnapshot.child("name").getValue().toString();
-                ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-                Log.d(TAG,"actionbar = "+actionBar.toString());
-                if(actionBar!=null){
-                    actionBar.setTitle(groupName);
-                 }
+                try{
+                    ActionBar actionBar = ((MainActivity) getActivity()).getSupportActionBar();
+                    Log.d(TAG,"actionbar = "+actionBar.toString());
+                    if(actionBar!=null){
+                        actionBar.setTitle(groupName);
+                    }
+                }catch (NullPointerException e){
+                    Log.d("debug",e.getMessage());
+                }
+
 
                 currency = dataSnapshot.child("currency").getValue().toString();
                 tv_currency_name.setText(currency);
