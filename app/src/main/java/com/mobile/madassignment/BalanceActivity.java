@@ -313,12 +313,15 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
                             memberMap.put(groupMember.getId(),groupMember);
 
                             members.add(groupMember);
-                            balanceListViewAdapter.notifyDataSetChanged();
+
                             for(String key :memberMap.keySet())//TODO
                                 Log.v("debug1", key);
                             //balance list
-                            if(memberMap.size()== total_members)
+                            if(memberMap.size()== total_members){
+                                balanceListViewAdapter.notifyDataSetChanged();
                                 EventBus.getDefault().post(new UpdatebalanceListEvent("notimportant"));
+                            }
+
 
                         }
 

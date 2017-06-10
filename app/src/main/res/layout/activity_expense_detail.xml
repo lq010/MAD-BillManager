@@ -124,26 +124,43 @@
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:background="@color/grey" />
-                    <LinearLayout
+                    <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_margin="5dp"
-                        android:orientation="vertical">
+                        android:gravity="center">
                         <TextView
+                            android:id="@+id/ds"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="description: "
                             android:textSize="17sp"/>
-                        <TextView
-                            android:padding="2dp"
-                            android:id="@+id/tv_description"
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:textSize="20sp"
-                            android:text="no description"
-                            android:textColor="@color/black"
+                            android:orientation="horizontal"
+
+                            android:layout_below="@+id/ds">
+                            <TextView
+                                android:padding="2dp"
+                                android:id="@+id/tv_description"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginRight="40dp"
+                                android:textSize="20sp"
+                                android:text="no description"
+                                android:textColor="@color/black"/>
+
+                        </LinearLayout>
+                        <ImageView
+                            android:visibility="invisible"
+                            android:id="@+id/img_has_pic"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:src="@drawable/picture"
+                            android:layout_below="@+id/ds"
                             android:layout_alignParentRight="true"/>
-                    </LinearLayout>
+                    </RelativeLayout>
                 </LinearLayout>
                 <LinearLayout
                     android:layout_width="match_parent"

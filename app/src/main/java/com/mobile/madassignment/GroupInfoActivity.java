@@ -104,7 +104,9 @@ public class GroupInfoActivity extends Activity {
                 String newName = nameEditArea.getText().toString();
                 if(newName.equals(name)) {
                     Toast.makeText(GroupInfoActivity.this, "The group name is not changed.",Toast.LENGTH_SHORT ).show();
-                } else {
+                } else if(newName==null){
+                    Toast.makeText(GroupInfoActivity.this, "Name cannot be null.",Toast.LENGTH_SHORT ).show();
+                }else {
                     mDatabaseRef.child("groups").child(group_key).child("name").setValue(nameEditArea.getText().toString());
                     Toast.makeText(GroupInfoActivity.this, "Change succeed.",Toast.LENGTH_SHORT ).show();
                     showNameL.setVisibility(View.VISIBLE);

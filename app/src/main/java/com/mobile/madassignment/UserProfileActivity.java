@@ -45,6 +45,8 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import static com.mobile.madassignment.util.Constants.Node_userInfo;
+
 public class UserProfileActivity extends Activity {
 
     private Button gallery;
@@ -208,6 +210,7 @@ public class UserProfileActivity extends Activity {
                             // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
                             Toast.makeText(UserProfileActivity.this, "Photo update success.", Toast.LENGTH_SHORT).show();
                             mRootRef.child("users").child(user.getUid()).child("photoFile").setValue(user.getUid());
+                            mRootRef.child("users").child(user.getUid()).child(Node_userInfo).child("profilePhoto").setValue(user.getUid());
                             //Uri downloadUrl = taskSnapshot.getDownloadUrl();
                         }
                     });

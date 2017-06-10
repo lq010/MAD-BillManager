@@ -1,6 +1,7 @@
 package com.mobile.madassignment;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -74,6 +75,7 @@ public class ExpenseDetailActivity extends AppCompatActivity {
     private ImageView iv_payer_userPhoto;
     private TextView tv_world_reason;
     private TextView tv_reason;
+    private ImageView bt_picture;
 
     private LinearLayout bottomBar;
     private LinearLayout delete;
@@ -121,6 +123,22 @@ public class ExpenseDetailActivity extends AppCompatActivity {
         bottomBar = (LinearLayout) findViewById(R.id.bottomBar);
         delete = (LinearLayout) findViewById(R.id.delete);
         edit = (LinearLayout) findViewById(R.id.edit);
+        bt_picture = (ImageView) findViewById(R.id.img_has_pic);
+
+        if(expense.getPicture()!=null){
+            bt_picture.setVisibility(View.VISIBLE);
+            bt_picture.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(ExpenseDetailActivity.this, FullImgActivity.class);
+                    Bundle bundle = new Bundle();
+                    bundle.putString("groupKey",group_key);
+                    bundle.putString("photoName",expense.getPicture());
+                    intent.putExtras(bundle);
+                    startActivity(intent);
+                }
+            });
+        }
 
         tv_groupName.setText(group_name);
         tv_expenseType.setText(expense.getType());

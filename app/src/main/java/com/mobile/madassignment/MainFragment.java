@@ -86,6 +86,7 @@ public class MainFragment extends Fragment {
     private LinearLayout ll_invite_button;
     private TextView tv_currency_name;
     private TextView deletedMark;
+    private List<GroupMember> members;
 
     private List<String> expenseKeys;
     private int numOfmembers=1;
@@ -98,6 +99,7 @@ public class MainFragment extends Fragment {
     private String currency;
     private float my_balance = -1;
 
+    private GroupMemberViewAdapter groupAdapter;
     public static MainFragment newInstance(String param1, String param2) {
         MainFragment fragment = new MainFragment();
         Bundle args = new Bundle();
@@ -250,8 +252,8 @@ public class MainFragment extends Fragment {
 
 
         //get group members
-        List<GroupMember> members = new ArrayList<>();
-        final GroupMemberViewAdapter groupAdapter = new GroupMemberViewAdapter(members , this.getContext());
+        members = new ArrayList<>();
+        groupAdapter = new GroupMemberViewAdapter(members , this.getContext());
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this.getActivity(),LinearLayoutManager.HORIZONTAL,false);
 
         // groupAdapter.getNames().add("add_new_member");
@@ -368,25 +370,28 @@ public class MainFragment extends Fragment {
                 // [END_EXCLUDE]
             }
         }
-//        else if(requestCode == REQUEST_BALANCE){
-//            if(resultCode == Activity.RESULT_OK){
-//                Log.d("result_activitey","requestCode="+requestCode+", resultCOde= OK");
-//                me.reset();
-//                totalSpending = 0;
-//                my_balance = 0;
-//                MainFragment currentFragment = this;
-//                FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
-//                fragTransaction.detach(currentFragment);
-//                fragTransaction.attach(currentFragment);
-//                fragTransaction.commit();
-//
-//
-//            }
-//            else if(resultCode == Activity.RESULT_CANCELED){
-//
-//                Log.d("result_activitey","requestCode="+requestCode+", resultCOde= canceled");
-//            }
-//        }
+        else if(requestCode == REQUEST_BALANCE){
+            if(resultCode == Activity.RESULT_OK){
+
+                Log.d("result_activitey","requestCode="+requestCode+", resultCOde= OK");
+
+                me.reset();
+                totalSpending = 0;
+                my_balance = 0;
+                MainFragment currentFragment = this;
+                FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
+                fragTransaction.detach(currentFragment);
+                fragTransaction.attach(currentFragment);
+                fragTransaction.commit();
+                rv_members.setAdapter(groupAdapter);
+                groupAdapter.notifyDataSetChanged();
+
+            }
+            else if(resultCode == Activity.RESULT_CANCELED){
+
+                Log.d("result_activitey","requestCode="+requestCode+", resultCOde= canceled");
+            }
+        }
     }
     // [END on_activity_result]
 

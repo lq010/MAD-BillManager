@@ -12,6 +12,8 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.ScaleAnimation;
 
+import com.bumptech.glide.Glide;
+import com.firebase.ui.storage.images.FirebaseImageLoader;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -69,33 +71,43 @@ public class BalanceListViewAdapter extends RecyclerView.Adapter<BalenceListView
         }else if(balance<0){
             holder.cost.setTextColor(Color.RED);
         }
+
         if(member.isPhotoExist()) {
-            FirebaseStorage storage = FirebaseStorage.getInstance();
-            StorageReference storageRef = storage.getReferenceFromUrl("gs://madassignment-1f6c6.appspot.com");
-            StorageReference photoRef = storageRef.child(member.getProfilePhoto() + ".jpg");
-            try {
-                final File localFile = File.createTempFile("images", "jpg");
-                final long ONE_MEGABYTE = 1024 * 1024;
-                photoRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                        // Local temp file has been created
 
-                        Picasso.with(inflater.getContext()).load(localFile).into(holder.photo);
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception exception) {
-                        Picasso.with(inflater.getContext()).load(R.drawable.profile).into(holder.photo);
-                        int errorCode = ((StorageException) exception).getErrorCode();
-                        String errorMessage = exception.getMessage();
-                        Log.d("userPhoto", errorMessage);
-                    }
-                });
-            } catch (IOException e) {
-                Log.d("userPhoto", e.getMessage());
-            }
-
+            Glide.with(this.inflater.getContext())
+                    .using(new FirebaseImageLoader())
+                    .load(FirebaseStorage.getInstance()
+                            .getReferenceFromUrl("gs://madassignment-1f6c6.appspot.com")
+                            .child(member.getProfilePhoto() + ".jpg"))
+                    .centerCrop()
+                    .crossFade()
+                    .into(holder.photo);
+//            FirebaseStorage storage = FirebaseStorage.getInstance();
+//            StorageReference storageRef = storage.getReferenceFromUrl("gs://madassignment-1f6c6.appspot.com");
+//            StorageReference photoRef = storageRef.child(member.getProfilePhoto() + ".jpg");
+//            try {
+//                final File localFile = File.createTempFile("images", "jpg");
+//                final long ONE_MEGABYTE = 1024 * 1024;
+//                photoRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+//                    @Override
+//                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+//                        // Local temp file has been created
+//
+//                        Picasso.with(inflater.getContext()).load(localFile).into(holder.photo);
+//                    }
+//                }).addOnFailureListener(new OnFailureListener() {
+//                    @Override
+//                    public void onFailure(@NonNull Exception exception) {
+//                        Picasso.with(inflater.getContext()).load(R.drawable.profile).into(holder.photo);
+//                        int errorCode = ((StorageException) exception).getErrorCode();
+//                        String errorMessage = exception.getMessage();
+//                        Log.d("userPhoto", errorMessage);
+//                    }
+//                });
+//            } catch (IOException e) {
+//                Log.d("userPhoto", e.getMessage());
+//            }
+//
         }else {
             Picasso.with(inflater.getContext()).load(R.drawable.profile).into(holder.photo);
         }
@@ -116,4 +128,5 @@ public class BalanceListViewAdapter extends RecyclerView.Adapter<BalenceListView
             lastPosition = position;
         }
     }
+
 }

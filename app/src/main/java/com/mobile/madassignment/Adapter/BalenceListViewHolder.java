@@ -20,6 +20,7 @@ public class BalenceListViewHolder extends RecyclerView.ViewHolder{
     public TextView cost;
     public Context context;
 
+
     public BalenceListViewHolder(View v) {
         super(v);
         name = (TextView) itemView.findViewById(R.id.tv_balance_user_name);
