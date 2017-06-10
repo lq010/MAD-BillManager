@@ -34,6 +34,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.utils.Utils;
+import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -70,6 +71,8 @@ import java.util.List;
 import static com.mobile.madassignment.util.FirebaseUtil.square_image;
 
 public class AddNewExpenseActivity extends AppCompatActivity implements View.OnTouchListener {
+
+    private static final int RC_OCR_CAPTURE = 7012;
     private ImageView ivNewExpenseBack;
     private ViewPager vpNewExpense;
     private ImageView ivNewExpenseState;//page
@@ -103,7 +106,7 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnT
 
     private ImageView ivInputOk;
 
-    private ImageView ivInputAdd;
+    private ImageView ivOCR;
     private static final String IMAGE_FILE_NAME = "expense.jpg";
     private String group_key;
     private HashMap<String, String> participants;
@@ -143,6 +146,7 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnT
         tvInputResult = (TextView) findViewById(R.id.tv_input_result);
         addExpensePhoto = (ImageView)findViewById(R.id.add_expense_photo);
         description = (EditText) findViewById(R.id.ed_new_description);
+        ivOCR = (ImageView) findViewById(R.id.iv_input_add);
 
         ivNewExpenseState = (ImageView) findViewById(R.id.iv_new_record_state);
         group_key = getIntent().getExtras().getString("group_key");
@@ -158,6 +162,16 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnT
                 menuWindow = new SelectPicPopupWindow(AddNewExpenseActivity.this, itemsOnClick);
                 menuWindow.showAtLocation(findViewById(R.id.main_layout),
                         Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL, 0, 0);
+            }
+        });
+
+        ivOCR.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(AddNewExpenseActivity.this, OcrCaptureActivity.class);
+
+
+                startActivityForResult(intent, RC_OCR_CAPTURE);
             }
         });
 
@@ -524,7 +538,7 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnT
         ivInputIv7.setOnTouchListener(this);
         ivInputIv8.setOnTouchListener(this);
         ivInputIv9.setOnTouchListener(this);
-        //ivInputAdd.setOnTouchListener(this);
+
         ivInputPoint.setOnTouchListener(this);
         ivInputDelete.setOnTouchListener(this);
         ivInputOk.setOnTouchListener(this);
@@ -547,7 +561,37 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnT
                     break;
 
             }
+        }else if(requestCode == RC_OCR_CAPTURE) {
+            if (resultCode == CommonStatusCodes.SUCCESS) {
+                if (data != null) {
+                    String text = data.getStringExtra(OcrCaptureActivity.TextBlockObject);
+                    Log.d("debug", "Text read: " + text);
+                    text = text.replace(',', '.');
+                    try{
+                        float cost = Float.parseFloat(DataFormat.myDFloatFormat(Float.parseFloat(text)));
+                        result = text;
+                        tvInputResult.setText(text);
+
+                    }catch (NumberFormatException e){
+                        Log.d("debug","errror :"+ e.getMessage());
+                        Toast.makeText(AddNewExpenseActivity.this,"get a invalid cost ( "+ text+ " ), please try again", Toast.LENGTH_LONG).show();
+                    }
+
+
+                } else {
+
+                    Log.d("debug", "No Text captured, intent data is null");
+                }
+            } else {
+//                statusMessage.setText(String.format(getString(R.string.ocr_error),
+//                        CommonStatusCodes.getStatusCodeString(resultCode)));
+                Log.d("debug", "OCR error");
+            }
         }
+        else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+
 
     }
 

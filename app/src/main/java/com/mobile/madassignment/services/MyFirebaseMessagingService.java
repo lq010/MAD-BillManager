@@ -25,6 +25,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.mobile.madassignment.MainActivity;
 import com.mobile.madassignment.R;
 
+import java.util.Calendar;
+
 
 /**
  * Created by lq on 05/05/2017.
@@ -57,14 +59,14 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                     String createdBy = remoteMessage.getData().get("creatorName");
                     String messageBody = "a new expense created by " + createdBy +"(group: " + groupName+")";
                     String messageTitle = "new expense";
-                    sendNotification(messageTitle, messageBody, groupKey,(int)remoteMessage.getSentTime() );
+                    sendNotification(messageTitle, messageBody, groupKey);
                 }else if(remoteMessage.getData().get("actionType").matches("deleteExpense")){
                     String groupKey = remoteMessage.getData().get("groupId");
                     String groupName = remoteMessage.getData().get("groupName");
                     String createdBy = remoteMessage.getData().get("creatorName");
                     String messageBody = "a expense deleted by " + createdBy +"(group: " + groupName+")";
                     String messageTitle = "a expense";
-                    sendNotification(messageTitle, messageBody, groupKey, (int)remoteMessage.getSentTime());
+                    sendNotification(messageTitle, messageBody, groupKey);
 
                 }
             }
@@ -103,7 +105,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
      *
      * @param messageBody FCM message body received.
      */
-    private void sendNotification(String messageTitle, String messageBody, String groupKey,int msgid) {
+    private void sendNotification(String messageTitle, String messageBody, String groupKey) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra("group_key",groupKey);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -135,7 +137,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        notificationManager.notify(msgid /* ID of notification */, notificationBuilder.build());
+        notificationManager.notify((int)Calendar.getInstance().getTimeInMillis() /* ID of notification */, notificationBuilder.build());
     }
 
 

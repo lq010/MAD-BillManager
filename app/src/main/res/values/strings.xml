@@ -17,7 +17,7 @@
     <string name="currency">currency</string>
     <string name="add_expense">add expense</string>
 
-
+    <string name="ok">OK</string>
     //expense type
     <string name="shopping">shopping</string>
     <string name="food">food</string>
@@ -74,4 +74,7 @@
     <string name="choosephoto">Choose from Photos</string>
     <string name="cancel">Cancel</string>
     <string name="title_activity_all_expenses">AllExpensesActivity</string>
+    <string name="no_camera_permission">This application cannot run because it does not have the camera permission.  The application will now exit.</string>
+    <string name="low_storage_error">Ocr dependencies cannot be downloaded due to low device storage</string>
+    <string name="permission_camera_rationale">Access to the camera is needed for detection</string>
 </resources>
