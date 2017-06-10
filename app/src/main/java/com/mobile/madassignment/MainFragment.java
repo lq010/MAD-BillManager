@@ -517,6 +517,14 @@ public class MainFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()){
+            case R.id.group_info:
+                Bundle bundle = new Bundle();
+                bundle.putString("group_key",group_key);
+                bundle.putSerializable("group_members", userId_nameMap);
+                Intent intent = new Intent(getActivity(),GroupInfoActivity.class);
+                intent.putExtras(bundle);
+                startActivity(intent);
+                return true;
             case R.id.action_exit_group:
                 if(!isInternetAvailable(this.getContext())){
                     showMessage("Please connect to the Internet");
