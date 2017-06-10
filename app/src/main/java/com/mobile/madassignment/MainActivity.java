@@ -132,14 +132,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
                             boolean init = true;
+                            String deviceToken = FirebaseInstanceId.getInstance().getToken();
+                            mRootRef.child("users").child(user.getUid()).child("deviceTokens")
+                                    .child(deviceToken).setValue(true);
                             for (DataSnapshot data :dataSnapshot.getChildren()){
                                 if (data.getKey().matches(Node_userInfo))
                                     init = false;
                             }
                             if(init){
-                                String deviceToken = FirebaseInstanceId.getInstance().getToken();
-                                mRootRef.child("users").child(user.getUid()).child("deviceTokens")
-                                        .child(deviceToken).setValue(true);
+
                                 String userPhoto = Default_Photo;
                                 UserInfo userInfo = new  UserInfo(user.getUid(),user.getDisplayName(),user.getEmail(),userPhoto) ;
                                 mRootRef.child("users").child(user.getUid()).child(Node_userInfo).setValue(userInfo);
@@ -219,13 +220,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                                             public void onComplete(@NonNull Task<Void> task) {
                                                 // user is now signed out
                                                 showSnackbar("signed out");
-                                                try{
-                                                FragmentManager fm = getSupportFragmentManager();
-                                                FragmentTransaction ft = fm.beginTransaction();
-                                                ft.remove(fm.findFragmentById(R.id.main_content));
-                                                ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
-                                                ft.commit();}
-                                                catch (NullPointerException e){
+                                                if(mainFragment!=null)
+                                                {
+                                                    FragmentManager fm = getSupportFragmentManager();
+                                                    FragmentTransaction ft = fm.beginTransaction();
+                                                    ft.remove(fm.findFragmentById(R.id.main_content));
+                                                    ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
+                                                    ft.commit();
+
 
                                                 }
 
