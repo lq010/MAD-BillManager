@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.firebase.ui.auth.ui.User;
 import com.google.android.gms.appinvite.AppInvite;
 import com.google.android.gms.appinvite.AppInviteReferral;
 import com.google.firebase.auth.FirebaseAuth;
@@ -17,6 +18,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.mobile.madassignment.models.Group;
 
 public class InvitationActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -66,13 +68,18 @@ public class InvitationActivity extends AppCompatActivity implements View.OnClic
         // [START_EXCLUDE]
         Log.d(TAG, "Found Referral: " + invitationId + ":" + deepLink);
         DatabaseReference mdatabaseRef = FirebaseDatabase.getInstance().getReference();
-        mdatabaseRef.child("groups").child(group_key).child("name")
+        mdatabaseRef.child("groups").child(group_key)//.child("name")
 
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        Group  group = dataSnapshot.getValue(Group.class);
                         ((TextView) findViewById(R.id.invitation_text))
-                                .setText(getString(R.string.invitation_msg_fmt,"\""+dataSnapshot.getValue().toString()+"\""));
+                                .setText(getString(R.string.invitation_msg_fmt,"\""+group.getName()+"\""));
+                        if(group.getMembers().containsKey(user.getUid())){
+                            ((TextView) findViewById(R.id.invitation_text))
+                                    .setText("you have joined the group: " +group.getName());
+                        }
                     }
 
                     @Override
@@ -98,9 +105,12 @@ public class InvitationActivity extends AppCompatActivity implements View.OnClic
                     DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
                     databaseReference.child("groups").child(group_key).child("members").child(user.getUid()).setValue(user.getDisplayName());
                     databaseReference.child("users").child(user.getUid()).child("groups").child(group_key).setValue("true");
+//                    Intent intent = new Intent(this, MainActivity.class);
+//                    startActivity(intent);
                 }else {
                     Log.d("error","group_key is :" +group_key);
                 }
+
                 this.finish();
 
             }else if(user == null){
