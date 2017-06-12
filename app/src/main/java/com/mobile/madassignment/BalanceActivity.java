@@ -445,12 +445,13 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
                             }
 
                             year_barEntryMap.put(year,yVals);
+                            Log.d("debug", "put "+ year);
 
                         }
 
 
                         yearListAdapter.notifyDataSetChanged();
-                        yearSpinner.setSelection(yearListAdapter.getCount());
+                        //yearSpinner.setSelection(yearListAdapter.getCount());
                         yearSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                             @Override
                             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -462,8 +463,11 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
 
                             }
                         });
+                        Log.d("debug_yesr",CurrentYear+"");
                         if(year_barEntryMap.containsKey(CurrentYear))
                             drawBarChart(year_barEntryMap.get(CurrentYear),CurrentYear);
+                        yearListAdapter.getItemId(1);
+                        //yearListAdapter.get;
 
                     }
 
@@ -501,6 +505,7 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
         if (barChart.getData() != null &&
                 barChart.getData().getDataSetCount() > 0) {
             set1 = (BarDataSet) barChart.getData().getDataSetByIndex(0);
+            set1.setLabel("The year "+ year);
             set1.setValues(yVals);
             barChart.getData().notifyDataChanged();
             barChart.notifyDataSetChanged();
@@ -528,6 +533,7 @@ public class BalanceActivity extends AppCompatActivity implements View.OnClickLi
 
             barChart.setData(barData);
         }
+
         barChart.invalidate();
     }
 
