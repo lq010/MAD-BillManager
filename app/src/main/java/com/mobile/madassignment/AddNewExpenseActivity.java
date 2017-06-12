@@ -68,6 +68,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.mobile.madassignment.util.Constants.UNKNOWN_TYPE;
 import static com.mobile.madassignment.util.FirebaseUtil.square_image;
 
 public class AddNewExpenseActivity extends AppCompatActivity implements View.OnTouchListener {
@@ -88,7 +89,7 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnT
     private DatabaseReference mDatebaseRef;
     private static final int REQUESTCODE_PICK = 0;
     private static final int REQUESTCODE_TAKE = 1;
-//    private static final int REQUESTCODE_CUTTING = 2;
+    //    private static final int REQUESTCODE_CUTTING = 2;
     private SelectPicPopupWindow menuWindow;
 
     private ImageView ivInputIv0;
@@ -567,6 +568,7 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnT
                     String text = data.getStringExtra(OcrCaptureActivity.TextBlockObject);
                     Log.d("debug", "Text read: " + text);
                     text = text.replace(',', '.');
+                    text = text.replaceAll("\\s+","");
                     try{
                         float cost = Float.parseFloat(DataFormat.myDFloatFormat(Float.parseFloat(text)));
                         result = text;
@@ -576,7 +578,14 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnT
                         Log.d("debug","errror :"+ e.getMessage());
                         Toast.makeText(AddNewExpenseActivity.this,"get a invalid cost ( "+ text+ " ), please try again", Toast.LENGTH_LONG).show();
                     }
-
+                    String type = data.getStringExtra("type");
+                    if(!type.matches(UNKNOWN_TYPE)){
+                        String desc = data.getStringExtra("description");
+                        description.setText(desc);
+                        if(type.matches("home")){
+                            setSelectedStyle(gvList1, 3);
+                        }
+                    }
 
                 } else {
 
@@ -598,7 +607,7 @@ public class AddNewExpenseActivity extends AppCompatActivity implements View.OnT
 
 
 
-//    public String getRealPathFromURI(Uri contentUri)
+    //    public String getRealPathFromURI(Uri contentUri)
 //    {
 //        String[] proj = { MediaStore.Audio.Media.DATA };
 //        Cursor cursor = getContentResolver().query(contentUri, null, null, null, null);
