@@ -17,7 +17,6 @@ package com.mobile.madassignment;
 
 import android.util.SparseArray;
 
-
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.text.TextBlock;
 import com.mobile.madassignment.view.GraphicOverlay;
@@ -49,6 +48,24 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
             TextBlock item = items.valueAt(i);
             OcrGraphic graphic = new OcrGraphic(mGraphicOverlay, item);
             mGraphicOverlay.add(graphic);
+
+            String text = item.getValue();
+            detectExpenseTyoe(text);
+
+            //Log.d("cam_debug1: ",text);
+        }
+    }
+
+    private void detectExpenseTyoe(String text) {
+        if(text.matches("gas")||text.contains("smc")){
+            //Log.d("cam_debug2: ","gas..." +text);
+            mGraphicOverlay.setType("home");
+            mGraphicOverlay.setDescription("gas bill");
+        }
+        else if(text.matches("luce")||text.matches("power")||text.contains("kWh")){
+            //Log.d("cam_debug2: ","power..." +text);
+            mGraphicOverlay.setType("home");
+            mGraphicOverlay.setDescription("electrical bill");
         }
     }
 

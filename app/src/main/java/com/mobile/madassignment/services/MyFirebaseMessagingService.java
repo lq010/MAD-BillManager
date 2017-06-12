@@ -52,23 +52,46 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             } else {
                 // Handle message within 10 seconds
                 // a expense was added
+                Log.d("debug","get message");
+                Log.d("debug", remoteMessage.getData().get("createdBy"));
+                Log.d("debug",user.getUid());
+                if(!remoteMessage.getData().get("createdBy").matches(user.getUid())){
+                    if(remoteMessage.getData().get("actionType").matches("newExpense")){
+                        String groupKey = remoteMessage.getData().get("groupId");
+                        String groupName = remoteMessage.getData().get("groupName");
+                        String createdBy = remoteMessage.getData().get("creatorName");
+                        String messageBody = "a new expense created by " + createdBy +"(group: " + groupName+")";
+                        String messageTitle = "new expense";
+                        sendNotification(messageTitle, messageBody, groupKey);
+                    }else if(remoteMessage.getData().get("actionType").matches("deleteExpense")){
+                        String groupKey = remoteMessage.getData().get("groupId");
+                        String groupName = remoteMessage.getData().get("groupName");
+                        String createdBy = remoteMessage.getData().get("creatorName");
+                        String messageBody = "a expense deleted by " + createdBy +"(group: " + groupName+")";
+                        String messageTitle = "a expense deleted";
+                        sendNotification(messageTitle, messageBody, groupKey);
 
-                if(remoteMessage.getData().get("actionType").matches("newExpense")){
-                    String groupKey = remoteMessage.getData().get("groupId");
-                    String groupName = remoteMessage.getData().get("groupName");
-                    String createdBy = remoteMessage.getData().get("creatorName");
-                    String messageBody = "a new expense created by " + createdBy +"(group: " + groupName+")";
-                    String messageTitle = "new expense";
-                    sendNotification(messageTitle, messageBody, groupKey);
-                }else if(remoteMessage.getData().get("actionType").matches("deleteExpense")){
-                    String groupKey = remoteMessage.getData().get("groupId");
-                    String groupName = remoteMessage.getData().get("groupName");
-                    String createdBy = remoteMessage.getData().get("creatorName");
-                    String messageBody = "a expense deleted by " + createdBy +"(group: " + groupName+")";
-                    String messageTitle = "a expense";
-                    sendNotification(messageTitle, messageBody, groupKey);
-
+                    }
                 }
+//                else{//debug model
+//                    if(remoteMessage.getData().get("actionType").matches("newExpense")){
+//                        String groupKey = remoteMessage.getData().get("groupId");
+//                        String groupName = remoteMessage.getData().get("groupName");
+//                        String createdBy = remoteMessage.getData().get("creatorName");
+//                        String messageBody = "a new expense created by " + createdBy +"(group: " + groupName+")";
+//                        String messageTitle = "(test)new expense";
+//                        sendNotification(messageTitle, messageBody, groupKey);
+//                    }else if(remoteMessage.getData().get("actionType").matches("deleteExpense")){
+//                        String groupKey = remoteMessage.getData().get("groupId");
+//                        String groupName = remoteMessage.getData().get("groupName");
+//                        String createdBy = remoteMessage.getData().get("creatorName");
+//                        String messageBody = "a expense deleted by " + createdBy +"(group: " + groupName+")";
+//                        String messageTitle = "(test)a expense deleted";
+//                        sendNotification(messageTitle, messageBody, groupKey);
+//
+//                    }
+//                }
+
             }
 
 
@@ -111,7 +134,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
                 PendingIntent.FLAG_ONE_SHOT);
-
+        Log.d("debug","get notification");
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_stat_ic_notification)
@@ -123,7 +146,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 .setContentIntent(pendingIntent);
 
         try {
-           Bitmap bitmap = Glide.with(this)
+            Bitmap bitmap = Glide.with(this)
                     .load(R.drawable.cocoin_logo)
                     .asBitmap()
                     .centerCrop()

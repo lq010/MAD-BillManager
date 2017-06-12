@@ -41,9 +41,6 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.CommonStatusCodes;
-//import com.google.android.gms.samples.vision.ocrreader.ui.camera.CameraSource;
-//import com.google.android.gms.samples.vision.ocrreader.ui.camera.CameraSourcePreview;
-//import com.google.android.gms.samples.vision.ocrreader.ui.camera.GraphicOverlay;
 import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
 import com.mobile.madassignment.view.CameraSource;
@@ -51,6 +48,12 @@ import com.mobile.madassignment.view.CameraSourcePreview;
 import com.mobile.madassignment.view.GraphicOverlay;
 
 import java.io.IOException;
+
+import static com.mobile.madassignment.util.Constants.UNKNOWN_TYPE;
+
+//import com.google.android.gms.samples.vision.ocrreader.ui.camera.CameraSource;
+//import com.google.android.gms.samples.vision.ocrreader.ui.camera.CameraSourcePreview;
+//import com.google.android.gms.samples.vision.ocrreader.ui.camera.GraphicOverlay;
 
 /**
  * Activity for the multi-tracker app.  This app detects text and displays the value with the
@@ -330,6 +333,12 @@ public final class OcrCaptureActivity extends AppCompatActivity {
             if (text != null && text.getValue() != null) {
                 Intent data = new Intent();
                 data.putExtra(TextBlockObject, text.getValue());
+                data.putExtra("type",mGraphicOverlay.getType());
+                Log.d("debug2","get type: "+ mGraphicOverlay.getType());
+                if(!mGraphicOverlay.getType().matches(UNKNOWN_TYPE)){
+                    data.putExtra("description", mGraphicOverlay.getDescription());
+                    Log.d("debug2","get desc: "+ mGraphicOverlay.getDescription());
+                }
                 setResult(CommonStatusCodes.SUCCESS, data);
                 finish();
             }

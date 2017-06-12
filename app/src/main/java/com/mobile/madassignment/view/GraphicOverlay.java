@@ -23,6 +23,8 @@ import android.view.View;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.mobile.madassignment.util.Constants.UNKNOWN_TYPE;
+
 /**
  * A view which renders a series of custom graphics to be overlaid on top of an associated preview
  * (i.e., the camera preview).  The creator can add graphics objects, update the objects, and remove
@@ -49,6 +51,25 @@ public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
     private float mHeightScaleFactor = 1.0f;
     private int mFacing = CameraSource.CAMERA_FACING_BACK;
     private Set<T> mGraphics = new HashSet<>();
+
+    private String type = UNKNOWN_TYPE;
+    private String description;
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     /**
      * Base class for a custom graphics object to be rendered within the graphic overlay.  Subclass
@@ -166,14 +187,24 @@ public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
             int[] location = new int[2];
             this.getLocationOnScreen(location);
             for (T graphic : mGraphics) {
+
                 if (graphic.contains(rawX - location[0], rawY - location[1])) {
+                   // gettyppe();//TODO
                     return graphic;
                 }
             }
             return null;
         }
     }
-
+//    public OcrGraphic gettyppe(){
+//
+//        for(T graphic : mGraphics){
+//            OcrGraphic ocrGraphic = (OcrGraphic)graphic;
+//            String text = ocrGraphic.getTextBlock().getValue();
+//            Log.d("cam_debug",text);
+//        }
+//        return null;
+//    }
     /**
      * Sets the camera attributes for size and facing direction, which informs how to transform
      * image coordinates later.
@@ -201,6 +232,7 @@ public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
             }
 
             for (Graphic graphic : mGraphics) {
+
                 graphic.draw(canvas);
             }
         }
