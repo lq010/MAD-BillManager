@@ -52,6 +52,9 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:text="home"
+            android:ellipsize="end"
+            android:maxWidth="130dp"
+            android:lines="1"
             android:textSize="18sp" />
         <TextView
             android:layout_marginLeft="5dp"

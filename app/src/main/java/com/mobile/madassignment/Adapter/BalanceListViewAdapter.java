@@ -82,6 +82,7 @@ public class BalanceListViewAdapter extends RecyclerView.Adapter<BalenceListView
                     .centerCrop()
                     .crossFade()
                     .into(holder.photo);
+
 //            FirebaseStorage storage = FirebaseStorage.getInstance();
 //            StorageReference storageRef = storage.getReferenceFromUrl("gs://madassignment-1f6c6.appspot.com");
 //            StorageReference photoRef = storageRef.child(member.getProfilePhoto() + ".jpg");

@@ -8,6 +8,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.bumptech.glide.Glide;
+import com.firebase.ui.storage.images.FirebaseImageLoader;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FileDownloadTask;
@@ -51,31 +53,39 @@ public class GroupMemberViewAdapter extends RecyclerView.Adapter<GroupMemberView
         GroupMember user = users.get(position);
         holder.name.setText(user.getName());
         if(user.isPhotoExist()){
-            Log.d(this.getClass().getName(),user.getProfilePhoto());
-            FirebaseStorage storage = FirebaseStorage.getInstance();
-            StorageReference storageRef = storage.getReferenceFromUrl("gs://madassignment-1f6c6.appspot.com");
-            StorageReference photoRef = storageRef.child(user.getProfilePhoto()+".jpg");
-            Log.d("profile", user.getProfilePhoto());///
-            try {
-                final File localFile = File.createTempFile("images", "jpg");
-                final long ONE_MEGABYTE = 1024*1024;
-                photoRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                        // Local temp file has been created
-
-                        Picasso.with(holder.getContext()).load(localFile).into(holder.photo);
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception exception) {
-                        // Handle any errors
-                        //Toast.makeText(UserProfileActivity.this, "photo download failed",Toast.LENGTH_SHORT ).show();
-                    }
-                });
-            } catch (IOException e) {
-                Log.d("userPhoto",e.getMessage());
-            }
+            Glide.with(this.inflater.getContext())
+                    .using(new FirebaseImageLoader())
+                    .load(FirebaseStorage.getInstance()
+                            .getReferenceFromUrl("gs://madassignment-1f6c6.appspot.com")
+                            .child(user.getProfilePhoto()+".jpg"))
+                    .centerCrop()
+                    .crossFade()
+                    .into(holder.photo);
+//            Log.d(this.getClass().getName(),user.getProfilePhoto());
+//            FirebaseStorage storage = FirebaseStorage.getInstance();
+//            StorageReference storageRef = storage.getReferenceFromUrl("gs://madassignment-1f6c6.appspot.com");
+//            StorageReference photoRef = storageRef.child(user.getProfilePhoto()+".jpg");
+//            Log.d("profile", user.getProfilePhoto());///
+//            try {
+//                final File localFile = File.createTempFile("images", "jpg");
+//                final long ONE_MEGABYTE = 1024*1024;
+//                photoRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+//                    @Override
+//                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+//                        // Local temp file has been created
+//
+//                        Picasso.with(holder.getContext()).load(localFile).into(holder.photo);
+//                    }
+//                }).addOnFailureListener(new OnFailureListener() {
+//                    @Override
+//                    public void onFailure(@NonNull Exception exception) {
+//                        // Handle any errors
+//                        //Toast.makeText(UserProfileActivity.this, "photo download failed",Toast.LENGTH_SHORT ).show();
+//                    }
+//                });
+//            } catch (IOException e) {
+//                Log.d("userPhoto",e.getMessage());
+//            }
         }
 
     }

@@ -94,6 +94,7 @@ public class MainFragment extends Fragment {
     private FirebaseAuth mAuth;
     private FirebaseUser user;
     private HashMap<String, String> userId_nameMap = UserNameMap.getUserId_nameMap();
+    private HashMap<String, String> userId_nameMap_private = new HashMap<>();
     private GroupMember me = new GroupMember();
     private String groupName;
     private String currency;
@@ -174,17 +175,20 @@ public class MainFragment extends Fragment {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 userId_nameMap.put(dataSnapshot.getKey(),dataSnapshot.getValue().toString());
+                userId_nameMap_private.put(dataSnapshot.getKey(),dataSnapshot.getValue().toString());
                 Log.d("put to map", dataSnapshot.getKey()+"= "+dataSnapshot.getValue().toString());
             }
 
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
                 userId_nameMap.put(dataSnapshot.getKey(),dataSnapshot.getValue().toString());
+                userId_nameMap_private.put(dataSnapshot.getKey(),dataSnapshot.getValue().toString());
             }
 
             @Override
             public void onChildRemoved(DataSnapshot dataSnapshot) {
 
+                userId_nameMap_private.remove(dataSnapshot.getKey());
             }
 
             @Override
@@ -304,7 +308,7 @@ public class MainFragment extends Fragment {
 
                 Bundle bundle = new Bundle();
                 bundle.putString("group_key",group_key);
-                bundle.putSerializable("group_members", userId_nameMap);
+                bundle.putSerializable("group_members", userId_nameMap_private);
                 Intent intent = new Intent(getActivity(),AddNewExpenseActivity.class);
                 intent.putExtras(bundle);
                 startActivity(intent);
@@ -525,7 +529,7 @@ public class MainFragment extends Fragment {
             case R.id.group_info:
                 Bundle bundle = new Bundle();
                 bundle.putString("group_key",group_key);
-                bundle.putSerializable("group_members", userId_nameMap);
+                bundle.putSerializable("group_members", userId_nameMap_private);
                 Intent intent = new Intent(getActivity(),GroupInfoActivity.class);
                 intent.putExtras(bundle);
                 startActivity(intent);
